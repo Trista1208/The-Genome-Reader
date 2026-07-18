@@ -6,7 +6,7 @@
 
 ## Sequence visualization
 
-The repository includes a self-contained, dependency-free frontend concept in `index.html`. Scrolling scrubs through a 15-second cinematic trace: an exterior orbit around a reconstructed DNA double helix, a close-up tokenization transition, an animated vector space, and a final three-dimensional neural-network fly-through. A clickable progress rail on the right exposes each phase.
+The repository includes a self-contained, dependency-free frontend concept in `index.html`. Scrolling scrubs through a 15-second cinematic trace: a shaded 3D DNA double helix spins, moves left, sheds base-pair tokens into the first model layer, and reveals a dense side-view three-dimensional neural network. A clickable progress rail on the right exposes each phase.
 
 Run it locally with:
 
