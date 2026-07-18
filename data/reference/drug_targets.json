@@ -1,0 +1,35 @@
+{
+  "species": "Escherichia coli",
+  "notes": [
+    "Deterministic target gate for Module 02.",
+    "If no required target gene is detected, prediction is forced to no-call.",
+    "Target presence is checked via nucleotide BLAST against bundled reference fragments."
+  ],
+  "drugs": {
+    "gentamicin": {
+      "class": "aminoglycoside",
+      "required_genes": ["rpsL", "rpsG", "16S_rRNA"],
+      "description": "30S ribosome / 16S rRNA aminoglycoside binding site"
+    },
+    "ciprofloxacin": {
+      "class": "fluoroquinolone",
+      "required_genes": ["gyrA", "gyrB", "parC", "parE"],
+      "description": "DNA gyrase and topoisomerase IV"
+    },
+    "ceftazidime": {
+      "class": "cephalosporin",
+      "required_genes": ["pbp3", "ftsI"],
+      "description": "Penicillin-binding protein 3 (PBP3)"
+    },
+    "cefotaxime": {
+      "class": "cephalosporin",
+      "required_genes": ["pbp3", "ftsI"],
+      "description": "Penicillin-binding protein 3 (PBP3)"
+    },
+    "piperacillin/tazobactam": {
+      "class": "beta-lactam",
+      "required_genes": ["pbp3", "ftsI"],
+      "description": "Penicillin-binding proteins"
+    }
+  }
+}

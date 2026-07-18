@@ -9,7 +9,9 @@ data/processed/cohort/*
 !data/processed/cohort/genome_list.txt
 !data/processed/cohort/genome_antibiotic_labels.tsv
 
-# Python
+tools/bin/
+.miniconda/
+
 __pycache__/
 *.py[cod]
 .venv/

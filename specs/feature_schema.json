@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "module": "01_genome_reader",
+  "description": "Sparse binary feature matrix from AMRFinderPlus reports for Module 02.",
+  "inputs": {
+    "fasta": "Assembled bacterial genome (.fna), one sample per file",
+    "amrfinder_tsv": "AMRFinderPlus nucleotide-mode output per genome"
+  },
+  "feature_id": {
+    "format": "{element_symbol}|{element_name}|{subtype}|{method}",
+    "rules": [
+      "Lowercase element_symbol; empty fields replaced with 'na'",
+      "One row per unique feature_id across the cohort",
+      "Value 1 if feature detected in genome, else 0"
+    ]
+  },
+  "outputs": {
+    "feature_catalog.tsv": {
+      "columns": [
+        "feature_id",
+        "element_symbol",
+        "element_name",
+        "scope",
+        "type",
+        "subtype",
+        "class",
+        "subclass",
+        "method"
+      ]
+    },
+    "feature_matrix.npz": {
+      "format": "scipy.sparse.csr_matrix",
+      "rows": "genome_id (sorted)",
+      "cols": "feature_id index (aligned to feature_catalog.tsv)",
+      "values": "0 or 1"
+    },
+    "genome_index.tsv": {
+      "columns": ["genome_id", "matrix_row"]
+    },
+    "manifest.json": {
+      "fields": [
+        "schema_version",
+        "n_genomes",
+        "n_features",
+        "amrfinder_db",
+        "organism",
+        "created_at"
+      ]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.1",
+  "description": "Backend JSON output for one genome antibiotic-response report.",
+  "endpoint": "scripts/score_genome.py {genome_id} [--out report.json]",
+  "evaluation_endpoint": "scripts/evaluate_models.py [--out data/processed/models/evaluation_report.json]",
+  "drug_fields": {
+    "prediction": "likely_to_fail | likely_to_work | no_call",
+    "probability_fail": "calibrated P(resistant)",
+    "probability_work": "calibrated P(susceptible)",
+    "confidence_score": "calibrated probability of the reported class",
+    "decision_reason": "human-readable explanation of the call",
+    "passes_actionable_call": "true only for likely_to_fail / likely_to_work",
+    "failure_reasons": "list of strings — why no_call or why model unavailable",
+    "evidence_category": "known_resistance_marker | statistical_association | no_known_resistance_signal | insufficient_or_conflicting_evidence",
+    "known_resistance_markers": "AMR genes/changes detected by AMRFinderPlus",
+    "supporting_features": "top RF features present in this genome",
+    "target_gate_passed": "boolean",
+    "target_gate_reason": "machine code",
+    "target_gate_explanation": "human-readable target gate result",
+    "no_call_reason": "uncertain_probability_band | missing_drug_target | model_not_trained | ...",
+    "model_available": "false when antibiotic was not trained"
+  },
+  "evaluation_report_fields": {
+    "passes_eval": "true when test split has R+S and recall criteria met",
+    "failure_reasons": "why metrics are not submission-ready",
+    "skip_reason": "why training was skipped for a drug"
+  }
+}

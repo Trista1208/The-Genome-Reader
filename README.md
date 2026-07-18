@@ -1,10 +1,70 @@
-# The Genome Reader
+# Genome Firewall — Backend
 
-**Module 01 of Genome Firewall** — Hack-Nation × OpenAI × MIT Club of Northern California × MIT Club of Germany
+**Modules 01 + 02** — Hack-Nation × OpenAI × MIT Club of Northern California × MIT Club of Germany
 
-> Turn a reconstructed bacterial genome (FASTA) into features an AI model can use to predict antibiotic response — before standard lab results arrive.
+> Backend pipeline: FASTA → AMRFinderPlus features → **calibrated Random Forest** → per-drug JSON scores (`likely_to_fail` / `likely_to_work` / `no_call`).
+
+**Scope:** this repo is **backend only**. Module 03 UI lives in [`frontend/`](frontend/README.md) and consumes [`specs/prediction_api.schema.json`](specs/prediction_api.schema.json).
 
 **Repo:** [Trista1208/The-Genome-Reader](https://github.com/Trista1208/The-Genome-Reader)
+
+---
+
+## Backend layers
+
+```text
+FASTA + lab labels
+        │
+        ▼
+┌──────────────────────────────────────────┐
+│ Layer 1 — Ingestion                      │
+│ cohort labels, splits, drug targets      │  backend/genome_firewall/layer1_ingestion/
+└──────────────────┬───────────────────────┘
+                   ▼
+┌──────────────────────────────────────────┐
+│ Layer 2 — Features (Module 01)           │
+│ AMRFinderPlus → sparse binary matrix       │  backend/genome_firewall/layer2_features/
+└──────────────────┬───────────────────────┘
+                   ▼
+┌──────────────────────────────────────────┐
+│ Layer 3 — Model (Module 02)              │
+│ Random Forest + isotonic calibration       │  backend/genome_firewall/layer3_model/
+│ homology-aware train/cal/test splits       │
+│ deterministic drug-target gate             │
+└──────────────────┬───────────────────────┘
+                   ▼
+┌──────────────────────────────────────────┐
+│ Layer 4 — Scoring                          │
+│ calibrated P(fail), confidence, no-call    │  backend/genome_firewall/layer4_scoring/
+└──────────────────┬───────────────────────┘
+                   ▼
+┌──────────────────────────────────────────┐
+│ Layer 5 — Evaluation                       │
+│ Brier, AUROC, balanced accuracy, no-call   │  backend/genome_firewall/layer5_evaluation/
+└──────────────────┬───────────────────────┘
+                   ▼
+           JSON report (API contract)
+           frontend/ consumes this
+```
+
+| Layer | Responsibility |
+|-------|----------------|
+| **1 Ingestion** | BV-BRC labels, genome lists, homology splits |
+| **2 Features** | AMRFinderPlus annotation → feature matrix ([`specs/feature_schema.json`](specs/feature_schema.json)) |
+| **3 Model** | **Random Forest** per antibiotic; isotonic calibration on cal split |
+| **4 Scoring** | Target gate, no-call band (0.40–0.60), `confidence_score` = calibrated P(predicted class) |
+| **5 Evaluation** | Held-out cluster metrics written to `data/processed/models/metrics.json` |
+
+### Score contract (credible confidence)
+
+Each drug in the JSON report includes:
+
+- `probability_fail` / `probability_work` — **isotonic-calibrated** after RF training  
+- `confidence_score` — probability of the reported class (not raw vote fraction)  
+- `no_call` when probability is in the uncertain band or target gate fails  
+- `evidence_category` — separates known AMR markers from model-only associations  
+
+See [`specs/prediction_api.schema.json`](specs/prediction_api.schema.json).
 
 ---
 
@@ -133,13 +193,14 @@ on the **organizer-provided fixed dataset**, plus a **clear specification of the
 
 ---
 
-## Recommended modeling baseline (full system)
+## Recommended model (this backend)
 
-- One **regularized logistic regression per antibiotic**  
-- Features from AMRFinderPlus (genes + mutations)  
-- CPU-friendly, easy to calibrate and explain  
+- **Random Forest** (`sklearn.ensemble.RandomForestClassifier`) — one model per antibiotic  
+- **Isotonic calibration** on the homology-held-out calibration split  
+- Class-weighted training for imbalanced R/S labels  
+- No-call band on calibrated probabilities (default 0.40–0.60)
 
-Optional stretch: genomic LMs (e.g. HyenaDNA, DNABERT-2) on selected regions/chunks — not required.
+Logistic regression / Streamlit UI are **not** used in this repo.
 
 ---
 
@@ -174,11 +235,11 @@ This is a **research prototype**. Predictions from historical genomes are **not*
 - [x] Download BV-BRC RELEASE_NOTES (AMR phenotypes + genome metadata)  
 - [x] Download AMRFinderPlus latest database  
 - [x] Select interim cohort (E. coli, 5 antibiotics, 3,000 genomes) — replace when organizer dataset ships  
-- [ ] Download cohort FASTA assemblies  
-- [ ] Document FASTA → AMRFinderPlus → feature matrix pipeline  
-- [ ] Specify feature output schema for Module 02  
-- [ ] Homology de-duplication + per-drug logistic regression (Module 02)  
-- [ ] Streamlit/Gradio decision report with no-call (Module 03)  
+- [x] Layered backend package under `backend/genome_firewall/`  
+- [x] Random Forest + isotonic calibration (`scripts/train_models.py`)  
+- [x] JSON scoring API (`scripts/score_genome.py`, `specs/prediction_api.schema.json`)  
+- [ ] Full cohort AMRFinderPlus annotation (resume download + batch)  
+- [ ] Frontend demo in `frontend/` (separate team)  
 
 ## Data download (repeatable)
 
@@ -196,6 +257,25 @@ python3 scripts/select_cohort.py --species "Escherichia coli" --n-antibiotics 5 
 
 # FASTA assemblies for the cohort (lftp; resume-safe)
 bash scripts/download_bvbrc_genomes.sh data/processed/cohort/genome_list.txt data/raw/bvbrc/genomes 6
+
+# Module 01–02 backend pipeline
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/pip install -e backend/
+
+python3 scripts/run_amrfinder_batch.py --workers 4 --threads 2
+python3 scripts/build_feature_matrix.py
+python3 scripts/homology_split.py
+python3 scripts/train_models.py
+
+# Score one genome → JSON for frontend
+python3 scripts/score_genome.py 562.144150 --out /tmp/report.json
+
+# Benchmark (test split metrics + failure reasons)
+python3 scripts/benchmark_models.py
+python3 scripts/benchmark_models.py --min-genomes 40 --strict
+
+# Automated tests
+pytest tests/ -q
 ```
 
 ---
