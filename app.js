@@ -230,20 +230,7 @@
           : smooth(reveal * (NETWORK_COUNTS.length + .35) - (layerIndex - 1) * .92),
       };
     });
-    const inputCount = Math.ceil(DNA_SEGMENTS / 3);
-    const inputSpan = Math.min(height * .73, 710);
-    const inputX = width < 760 ? width * .34 : width * .35;
-    const inputs = Array.from({ length: inputCount }, (_, index) => ({
-      x: inputX + (index % 2 === 0 ? -3 : 4),
-      y: height * .5 + (index / (inputCount - 1) - .5) * inputSpan,
-      nodeIndex: index,
-    }));
-    return {
-      layers,
-      inputs,
-      inputReveal: smooth((time - 8.45) / .9),
-      reveal,
-    };
+    return { layers, reveal };
   }
 
   function hoverActivation(node) {
@@ -263,16 +250,7 @@
   }
 
   function drawNetwork(time, network) {
-    const { layers, inputs, inputReveal, reveal } = network;
-    const firstLayer = layers[0];
-
-    inputs.forEach((input) => firstLayer.nodes.forEach((node) => {
-      const selector = (input.nodeIndex * 7 + node.nodeIndex * 5) % 13;
-      if (selector > 5) return;
-      const hover = Math.max(hoverActivation(input), hoverActivation(node));
-      const activation = Math.max(smooth(reveal * 7 - selector * .045), hover);
-      line(input, node, inputReveal * firstLayer.reveal * (.045 + activation * .15), .55 + activation * .5, activation > .72 ? WHITE : "122,122,120");
-    }));
+    const { layers, reveal } = network;
 
     for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex += 1) {
       const layer = layers[layerIndex];
@@ -306,37 +284,36 @@
     });
   }
 
-  function drawTokenFlow(time, dna, network) {
+  function drawParticleFlow(time, dna, network) {
     const progress = smooth((time - SHIFT_END + .25) / (TOKEN_END - SHIFT_END + .15));
     if (progress <= .003) return;
-    const origins = dna.nodes.filter((node) => node.index % 3 === 1);
-    const targets = network.inputs;
-    origins.forEach((originNode, index) => {
-      const target = targets[index % targets.length];
-      const localProgress = smooth(progress * 1.35 - index * .025);
-      if (localProgress <= .003) return;
-      const origin = originNode.middle;
-      const controlA = { x: origin.x + width * .09, y: origin.y };
-      const controlB = { x: target.x - width * .075, y: target.y };
-      const position = pointOnCurve(origin, controlA, controlB, target, localProgress);
-      const previous = pointOnCurve(origin, controlA, controlB, target, clamp(localProgress - .1));
-      line(previous, position, .42 + localProgress * .48, 1.2);
-      if (localProgress > .82) {
-        line({ x: target.x - 54, y: target.y }, target, (localProgress - .82) / .18 * .74, 1.1);
+    const sources = dna.nodes.filter((node) => node.index % 2 === 0);
+    const targets = network.layers[0].nodes;
+    sources.forEach((source, sourceIndex) => {
+      for (let fragment = 0; fragment < 4; fragment += 1) {
+        const target = targets[(sourceIndex * 7 + fragment * 11) % targets.length];
+        const localProgress = smooth(progress * 1.48 - sourceIndex * .015 - fragment * .06);
+        if (localProgress <= .003) continue;
+        const origin = fragment % 3 === 0
+          ? source.strandA
+          : fragment % 3 === 1
+            ? source.middle
+            : source.strandB;
+        const phase = sourceIndex * .83 + fragment * 1.7;
+        const controlA = {
+          x: origin.x + width * (.075 + fragment * .008),
+          y: origin.y + Math.sin(phase) * 34,
+        };
+        const controlB = {
+          x: target.x - width * .07,
+          y: target.y + Math.cos(phase) * 24,
+        };
+        const position = pointOnCurve(origin, controlA, controlB, target, localProgress);
+        const previous = pointOnCurve(origin, controlA, controlB, target, clamp(localProgress - .055));
+        const arrivalFade = 1 - smooth((localProgress - .9) / .1) * .62;
+        line(previous, position, arrivalFade * (.26 + localProgress * .5), .7 + fragment * .08);
+        drawSynapseNode(position, 1.15 + fragment * .16, arrivalFade, .42 + localProgress * .58);
       }
-
-      context.save();
-      context.translate(position.x, position.y);
-      context.rotate(time * .65 + index * .41);
-      const size = 8 + localProgress * 5;
-      context.fillStyle = "#060606";
-      context.strokeStyle = `rgba(${WHITE},${.7 + localProgress * .3})`;
-      context.lineWidth = 1.4;
-      context.fillRect(-size / 2, -size / 2, size, size);
-      context.strokeRect(-size / 2, -size / 2, size, size);
-      context.fillStyle = `rgba(${WHITE},${localProgress})`;
-      context.fillRect(-1.6, -1.6, 3.2, 3.2);
-      context.restore();
     });
   }
 
@@ -352,7 +329,7 @@
     const dnaFade = 1 - smooth((time - 8.05) / 1.05);
     const dna = drawRealisticDna(time, dnaFade);
     drawNetwork(time, network);
-    drawTokenFlow(time, dna, network);
+    drawParticleFlow(time, dna, network);
     context.restore();
   }
 
