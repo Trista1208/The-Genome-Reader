@@ -67,53 +67,27 @@
     };
   }
 
-  function drawTube(from, to, radius, brightness, alpha, time = 0, phase = 0) {
+  function drawTube(from, to, radius, brightness, alpha) {
     if (alpha <= .003) return;
     const value = Math.round(clamp(brightness, 38, 242));
-    const shimmer = (Math.sin(time * 4.15 + phase) + 1) * .5;
-    const counterShimmer = (Math.cos(time * 3.35 - phase * 1.4) + 1) * .5;
-    const metal = context.createLinearGradient(from.x, from.y, to.x, to.y);
-    const dark = Math.round(5 + shimmer * 14);
-    const mid = Math.round(value * (.32 + shimmer * .22));
-    const high = Math.min(255, Math.round(value + 34 + shimmer * 28));
-    metal.addColorStop(0, `rgba(${dark},${dark},${dark},${alpha})`);
-    metal.addColorStop(.16 + shimmer * .07, `rgba(${high},${high},${high},${alpha})`);
-    metal.addColorStop(.38 + shimmer * .06, `rgba(${mid},${mid},${mid},${alpha})`);
-    metal.addColorStop(.61 + shimmer * .08, `rgba(18,18,18,${alpha})`);
-    metal.addColorStop(.8 + shimmer * .04, `rgba(${high},${high},${high},${alpha})`);
-    metal.addColorStop(1, `rgba(${Math.round(mid * .7)},${Math.round(mid * .7)},${Math.round(mid * .7)},${alpha})`);
     context.save();
     context.lineCap = "round";
-    context.shadowColor = `rgba(255,255,255,${alpha * (.12 + counterShimmer * .18)})`;
-    context.shadowBlur = 2 + counterShimmer * 4;
     context.strokeStyle = `rgba(0,0,0,${alpha * .92})`;
     context.lineWidth = radius + 7;
     context.beginPath();
     context.moveTo(from.x, from.y);
     context.lineTo(to.x, to.y);
     context.stroke();
-    context.strokeStyle = `rgba(${Math.round(value * .26)},${Math.round(value * .26)},${Math.round(value * .26)},${alpha})`;
+    context.strokeStyle = `rgba(${Math.round(value * .34)},${Math.round(value * .34)},${Math.round(value * .34)},${alpha})`;
     context.lineWidth = radius + 3;
     context.stroke();
-    context.strokeStyle = metal;
+    context.strokeStyle = `rgba(${value},${value},${Math.min(255, value + 4)},${alpha})`;
     context.lineWidth = radius;
     context.stroke();
     context.strokeStyle = `rgba(255,255,255,${alpha * .34})`;
     context.lineWidth = Math.max(1, radius * .22);
     context.stroke();
 
-    const drawReflection = (position, span, strength, thickness) => {
-      const start = clamp(position - span);
-      const end = clamp(position + span);
-      context.strokeStyle = `rgba(255,255,255,${alpha * strength})`;
-      context.lineWidth = Math.max(1, radius * thickness);
-      context.beginPath();
-      context.moveTo(lerp(from.x, to.x, start), lerp(from.y, to.y, start));
-      context.lineTo(lerp(from.x, to.x, end), lerp(from.y, to.y, end));
-      context.stroke();
-    };
-    drawReflection(mod(time * .78 + phase * .117, 1), .11, .36 + shimmer * .5, .34);
-    drawReflection(mod(time * .53 - phase * .083 + .47, 1), .065, .2 + counterShimmer * .34, .18);
     context.restore();
   }
 
@@ -177,14 +151,10 @@
     const rise = Math.min(width, height) * .041;
     const nodes = [];
     for (let index = 0; index < DNA_SEGMENTS; index += 1) {
-      const distortion = Math.sin(time * 2.7 + index * .72) * 5.2
-        + Math.sin(time * 4.6 - index * .34) * 2.15;
-      const localRadius = radius + distortion;
-      const angle = index * .55 + Math.sin(time * 1.25 + index * .19) * .028;
-      const y = (index - (DNA_SEGMENTS - 1) / 2) * rise
-        + Math.sin(time * 1.8 + index * .43) * 2.6;
-      const strandA = projectDna(Math.cos(angle) * localRadius, y, Math.sin(angle) * localRadius, camera);
-      const strandB = projectDna(Math.cos(angle + Math.PI) * localRadius, y, Math.sin(angle + Math.PI) * localRadius, camera);
+      const angle = index * .55;
+      const y = (index - (DNA_SEGMENTS - 1) / 2) * rise;
+      const strandA = projectDna(Math.cos(angle) * radius, y, Math.sin(angle) * radius, camera);
+      const strandB = projectDna(Math.cos(angle + Math.PI) * radius, y, Math.sin(angle + Math.PI) * radius, camera);
       nodes.push({ index, strandA, strandB, middle: { x: (strandA.x + strandB.x) / 2, y: (strandA.y + strandB.y) / 2 } });
     }
     return { nodes, camera };
@@ -198,8 +168,8 @@
     for (let index = 0; index < dna.nodes.length - 1; index += 1) {
       const current = dna.nodes[index];
       const next = dna.nodes[index + 1];
-      primitives.push({ type: "strand", from: current.strandA, to: next.strandA, depth: (current.strandA.z + next.strandA.z) / 2, phase: index * .39 });
-      primitives.push({ type: "strand", from: current.strandB, to: next.strandB, depth: (current.strandB.z + next.strandB.z) / 2, phase: index * .39 + 1.7 });
+      primitives.push({ type: "strand", from: current.strandA, to: next.strandA, depth: (current.strandA.z + next.strandA.z) / 2 });
+      primitives.push({ type: "strand", from: current.strandB, to: next.strandB, depth: (current.strandB.z + next.strandB.z) / 2 });
     }
     dna.nodes.forEach((node) => primitives.push({ type: "rung", node, depth: (node.strandA.z + node.strandB.z) / 2 }));
     primitives.sort((a, b) => b.depth - a.depth);
@@ -208,7 +178,7 @@
       if (primitive.type === "strand") {
         const scale = (primitive.from.scale + primitive.to.scale) / 2;
         const light = (primitive.from.light + primitive.to.light) / 2;
-        drawTube(primitive.from, primitive.to, Math.max(7, 19 * scale), 82 + light * 148, alpha, time, primitive.phase);
+        drawTube(primitive.from, primitive.to, Math.max(7, 19 * scale), 82 + light * 148, alpha);
         return;
       }
       const { node } = primitive;
@@ -216,13 +186,13 @@
       const rungAlpha = selected ? alpha * (1 - extraction * .82) : alpha;
       const scale = (node.strandA.scale + node.strandB.scale) / 2;
       const light = (node.strandA.light + node.strandB.light) / 2;
-      drawTube(node.strandA, node.strandB, Math.max(2.2, 5 * scale), 118 + light * 120, rungAlpha * .86, time, node.index * .61);
+      drawTube(node.strandA, node.strandB, Math.max(2.2, 5 * scale), 118 + light * 120, rungAlpha * .86);
       for (let atom = 1; atom <= 3; atom += 1) {
         const amount = atom / 4;
         drawSphere({
           x: lerp(node.strandA.x, node.strandB.x, amount),
           y: lerp(node.strandA.y, node.strandB.y, amount),
-        }, Math.max(1.2, 2.8 * scale), 196 + Math.sin(time * 2.8 + node.index + atom) * 24, rungAlpha * .72);
+        }, Math.max(1.2, 2.8 * scale), 196, rungAlpha * .72);
       }
     });
 

@@ -6,7 +6,7 @@
 
 ## Sequence visualization
 
-The repository includes a self-contained, dependency-free frontend concept in `index.html`. A continuous 15-second animation shows a liquid-metal 3D DNA double helix spinning, moving left, dissolving into glowing fragments that enter the first model layer, and revealing a dense side-view compression neural network.
+The repository includes a self-contained, dependency-free frontend concept in `index.html`. A continuous 15-second animation shows a shaded 3D DNA double helix spinning, moving left, dissolving into glowing fragments that enter the first model layer, and revealing a dense side-view compression neural network.
 
 Run it locally with:
 
