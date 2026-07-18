@@ -1,18 +1,230 @@
-:root { background: #000; }
+:root {
+  color-scheme: dark;
+  background: #000;
+  --paper: #f8f8f6;
+  --ash: #747472;
+  --faint: #282827;
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
 
 * { box-sizing: border-box; }
 
-html, body, main {
-  width: 100%;
+html {
   min-width: 320px;
-  height: 100%;
   margin: 0;
+  background: #000;
+  scrollbar-color: #777 #0a0a0a;
+  scrollbar-width: thin;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  background: #000;
+  color: var(--paper);
+  font-family: var(--font);
+}
+
+button { font: inherit; }
+
+.scroll-story {
+  position: relative;
+  width: 100%;
+  height: 600vh;
+  background: #000;
+}
+
+.sticky-frame {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
   overflow: hidden;
   background: #000;
 }
 
 #sequence-canvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.progress-rail {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  right: clamp(20px, 3.8vw, 62px);
+  width: 132px;
+  height: min(54vh, 430px);
+  min-height: 320px;
+  padding: 34px 0 32px;
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.rail-heading,
+.rail-count,
+.scroll-cue,
+.rail-stage {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.rail-heading,
+.rail-count {
+  position: absolute;
+  right: 0;
+  margin: 0;
+  color: var(--ash);
+}
+
+.rail-heading { top: 0; }
+.rail-count { bottom: 0; font-variant-numeric: tabular-nums; }
+#rail-current { color: var(--paper); }
+
+.rail-track {
+  position: absolute;
+  top: 34px;
+  right: 3px;
+  bottom: 32px;
+  width: 1px;
+  overflow: visible;
+  background: var(--faint);
+}
+
+#rail-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 0;
+  background: var(--paper);
+  box-shadow: 0 0 12px rgba(255,255,255,.34);
+}
+
+.rail-stages {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.rail-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 13px;
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+  color: #535352;
+  background: transparent;
+  cursor: pointer;
+  transition: color .25s ease;
+}
+
+.rail-stage i {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 7px;
+  height: 7px;
+  margin-right: 0;
+  border: 1px solid #555553;
+  border-radius: 50%;
+  background: #000;
+  transition: background .25s ease, border-color .25s ease, transform .25s ease;
+}
+
+.rail-stage:hover { color: #b7b7b2; }
+
+.rail-stage.is-active { color: var(--paper); }
+.rail-stage.is-active i {
+  border-color: var(--paper);
+  background: var(--paper);
+  box-shadow: 0 0 12px rgba(255,255,255,.45);
+  transform: scale(1.16);
+}
+
+.rail-stage:focus-visible {
+  outline: 1px solid var(--paper);
+  outline-offset: 6px;
+}
+
+.scroll-cue {
+  position: absolute;
+  z-index: 2;
+  bottom: clamp(24px, 4vh, 46px);
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  color: #9a9a96;
+  transform: translateX(-50%);
+  transition: opacity .35s ease, transform .35s ease;
+  pointer-events: none;
+}
+
+.scroll-cue i {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 34px;
+  overflow: hidden;
+  background: #282827;
+}
+
+.scroll-cue i::after {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  width: 1px;
+  height: 15px;
+  background: var(--paper);
+  content: "";
+  animation: scroll-drop 1.55s ease-in-out infinite;
+}
+
+.scroll-story.has-scrolled .scroll-cue {
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
+
+@keyframes scroll-drop {
+  0% { transform: translateY(0); }
+  70%, 100% { transform: translateY(52px); }
+}
+
+@media (max-width: 650px) {
+  .progress-rail {
+    right: 14px;
+    width: 32px;
+    height: 46vh;
+    min-height: 280px;
+  }
+
+  .rail-heading,
+  .rail-stage span { display: none; }
+  .rail-stage { gap: 0; }
+  .rail-count { font-size: 8px; letter-spacing: .06em; }
+  .scroll-cue { bottom: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

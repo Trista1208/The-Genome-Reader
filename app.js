@@ -1,9 +1,15 @@
 (() => {
   const canvas = document.getElementById("sequence-canvas");
   const context = canvas.getContext("2d");
+  const story = document.getElementById("scroll-story");
+  const railFill = document.getElementById("rail-fill");
+  const railCurrent = document.getElementById("rail-current");
+  const railStages = [...document.querySelectorAll(".rail-stage")];
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const LOOP_DURATION = 15;
+  const SCROLL_START_TIME = .75;
+  const SCROLL_END_TIME = 14.2;
   const ORBIT_END = 5.25;
   const TOKEN_END = 8.25;
   const VECTOR_END = 12.1;
@@ -17,7 +23,8 @@
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let elapsed = isFrozenPreview ? modPreview(requestedTime) : prefersReducedMotion ? 10.4 : 0;
+  let elapsed = isFrozenPreview ? modPreview(requestedTime) : SCROLL_START_TIME;
+  let targetElapsed = elapsed;
   let lastFrame = performance.now();
 
   const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -314,15 +321,65 @@
     drawNeuralNetwork(time, networkProgress * loopFade);
   }
 
+  function phaseForTime(time) {
+    if (time < 2.45) return 0;
+    if (time < ORBIT_END) return 1;
+    if (time < TOKEN_END) return 2;
+    if (time < VECTOR_END) return 3;
+    return 4;
+  }
+
+  function updateRail(progress, time) {
+    const phase = phaseForTime(time);
+    railFill.style.height = `${progress * 100}%`;
+    railCurrent.textContent = String(phase + 1).padStart(2, "0");
+    railStages.forEach((stage, index) => {
+      const active = index === phase;
+      stage.classList.toggle("is-active", active);
+      if (active) stage.setAttribute("aria-current", "step");
+      else stage.removeAttribute("aria-current");
+    });
+  }
+
+  function updateScrollTarget() {
+    const availableScroll = Math.max(1, story.offsetHeight - window.innerHeight);
+    const progress = isFrozenPreview
+      ? clamp((requestedTime - SCROLL_START_TIME) / (SCROLL_END_TIME - SCROLL_START_TIME))
+      : clamp(window.scrollY / availableScroll);
+    targetElapsed = isFrozenPreview
+      ? requestedTime
+      : SCROLL_START_TIME + progress * (SCROLL_END_TIME - SCROLL_START_TIME);
+    if (prefersReducedMotion || isFrozenPreview) elapsed = targetElapsed;
+    story.classList.toggle("has-scrolled", progress > .012);
+    updateRail(progress, targetElapsed);
+  }
+
+  railStages.forEach((stage) => stage.addEventListener("click", () => {
+    const time = Number(stage.dataset.time);
+    const availableScroll = Math.max(1, story.offsetHeight - window.innerHeight);
+    window.scrollTo({
+      top: clamp((time - SCROLL_START_TIME) / (SCROLL_END_TIME - SCROLL_START_TIME)) * availableScroll,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }));
+
   function animate(now) {
     const delta = Math.min((now - lastFrame) / 1000, .05);
     lastFrame = now;
-    if (!prefersReducedMotion && !isFrozenPreview) elapsed = mod(elapsed + delta, LOOP_DURATION);
+    if (!prefersReducedMotion && !isFrozenPreview) {
+      const smoothing = 1 - Math.pow(.0007, delta);
+      elapsed += (targetElapsed - elapsed) * smoothing;
+    }
     render(elapsed);
     requestAnimationFrame(animate);
   }
 
-  window.addEventListener("resize", resize);
+  window.addEventListener("scroll", updateScrollTarget, { passive: true });
+  window.addEventListener("resize", () => {
+    resize();
+    updateScrollTarget();
+  });
   resize();
+  updateScrollTarget();
   requestAnimationFrame(animate);
 })();
