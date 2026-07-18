@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  --char:#14110f; --char-2:#0e0c0b; --paper:#f7f5f2; --ash:#9a938c; --silver:#c9c2ba;
+  --red:#dc2626; --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--char);
+  font-family:'Inter',ui-sans-serif,system-ui,sans-serif;color:var(--paper);
+  -webkit-font-smoothing:antialiased}
+canvas{display:block}
+#gl{position:fixed;inset:0;transition:opacity 1s}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:5;transition:opacity .8s;
+  background:radial-gradient(ellipse at center,transparent 58%,rgba(20,17,15,.5) 100%)}
+
+/* ---------- unlock transition to content ---------- */
+body.unlocked{overflow:auto}
+#content{display:none;position:relative;z-index:20}
+body.unlocked #content{display:block}
+body.unlocked #gl{opacity:.1}
+body.unlocked #vignette,body.unlocked .hud,body.unlocked #beat,body.unlocked #endpanel,
+body.unlocked #intro{opacity:0 !important;pointer-events:none !important}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;z-index:10;font-family:var(--mono);pointer-events:none;transition:opacity .5s}
+#hud-logo{top:26px;left:30px;display:flex;align-items:center;gap:11px;font-size:12px;font-weight:500;letter-spacing:.3em}
+#hud-status{top:28px;right:30px;font-size:11px;letter-spacing:.18em;color:var(--ash)}
+#hud-status b{color:var(--red);font-weight:400;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+#hud-hint{bottom:26px;right:30px;font-size:10px;letter-spacing:.18em;color:var(--ash);text-align:right}
+#hud-depth{bottom:26px;left:30px;font-size:10px;letter-spacing:.18em;color:var(--ash)}
+#hud-depth b{color:var(--paper);font-weight:400}
+#hud-depth .zone{color:var(--red)}
+#hud-progress{position:fixed;bottom:52px;left:30px;z-index:10;width:130px;height:1px;
+  background:rgba(247,245,242,.12);transition:opacity .5s;pointer-events:none}
+#hud-progress i{display:block;height:100%;width:0;background:var(--red);transition:width .3s}
+
+/* ---------- beats ---------- */
+#beat{position:fixed;left:30px;bottom:78px;z-index:10;max-width:430px;pointer-events:none;transition:opacity .5s}
+#beat .bk{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--red);margin-bottom:14px}
+#beat .bt{font-size:clamp(26px,2.6vw,40px);font-weight:400;letter-spacing:-.03em;line-height:1.05;margin-bottom:14px}
+#beat .bs{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--ash)}
+
+/* ---------- end panel ---------- */
+#endpanel{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 1s}
+#endpanel.on{opacity:1;pointer-events:auto}
+.panel{max-width:660px;width:calc(100% - 48px);background:rgba(20,17,15,.85);
+  border:1px solid rgba(220,38,38,.25);backdrop-filter:blur(14px);padding:44px 44px 36px}
+.panel .pk{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--red);margin-bottom:18px}
+.panel h2{font-size:clamp(24px,2.4vw,34px);font-weight:400;letter-spacing:-.03em;margin-bottom:6px}
+.panel .meta{font-family:var(--mono);font-size:11px;color:var(--ash);margin-bottom:28px}
+.rrow{display:grid;grid-template-columns:1.2fr .9fr .5fr;gap:16px;padding:11px 0;
+  border-bottom:1px solid rgba(247,245,242,.08);font-family:var(--mono);font-size:12px;align-items:baseline}
+.rrow.head{color:var(--ash);font-size:9px;letter-spacing:.18em;text-transform:uppercase;border-bottom-color:rgba(247,245,242,.2)}
+.drug{color:var(--paper)} .v-f{color:var(--red)} .v-w{color:var(--paper)} .v-n{color:var(--ash)}
+.conf{text-align:right;color:var(--paper)}
+.panel .banner{margin-top:22px;font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--ash);
+  border-left:2px solid var(--red);padding-left:14px}
+.panel .banner b{color:var(--paper);font-weight:400}
+.panel .cta{margin-top:28px;display:flex;gap:20px;align-items:center}
+.btn{pointer-events:auto;display:inline-block;background:var(--red);color:var(--paper);
+  text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  padding:14px 24px;transition:box-shadow .25s;border:0;cursor:pointer}
+.btn:hover{box-shadow:0 0 34px rgba(220,38,38,.5)}
+.ghost-l{pointer-events:auto;font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ash);
+  text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(154,147,140,.4);
+  padding-bottom:3px;background:none;border-top:0;border-left:0;border-right:0;cursor:pointer}
+.ghost-l:hover{color:var(--paper)}
+
+/* ---------- intro ---------- */
+#intro{position:fixed;inset:0;z-index:30;background:var(--char);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  transition:opacity 1.1s;cursor:pointer}
+#intro.off{opacity:0;pointer-events:none}
+#intro .ik{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--red);margin-bottom:30px}
+#intro h1{font-size:clamp(40px,7vw,110px);font-weight:400;letter-spacing:-.045em;line-height:.98}
+#intro h1 span{color:var(--red)}
+#intro .is{margin-top:30px;font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ash);max-width:440px}
+#intro .go{margin-top:52px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--paper);animation:hint 2.4s infinite}
+@keyframes hint{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ---------- content layer ---------- */
+#content{background:linear-gradient(180deg,rgba(20,17,15,.92),var(--char) 30vh)}
+.csec{max-width:1200px;margin:0 auto;padding:110px 40px;border-top:1px solid rgba(247,245,242,.08)}
+.csec .ck{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--red);
+  text-transform:uppercase;margin-bottom:22px}
+.csec h2{font-size:clamp(32px,3.6vw,56px);font-weight:400;letter-spacing:-.035em;line-height:1.05;margin-bottom:20px}
+.csec .cs{font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ash);max-width:560px}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:48px;margin-top:64px}
+.citem{border-top:1px solid rgba(220,38,38,.35);padding-top:22px}
+.citem .ci{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--red);margin-bottom:16px}
+.citem h3{font-size:22px;font-weight:400;letter-spacing:-.02em;margin-bottom:14px}
+.citem p{font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--ash)}
+.citem p b{color:var(--paper);font-weight:400}
+.cfoot{border-top:1px solid rgba(247,245,242,.08);padding:70px 40px 56px;text-align:center}
+.cfoot p{font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--ash);max-width:640px;margin:0 auto}
+.cfoot .reenter{margin:34px auto 0;display:inline-block;background:none;cursor:pointer;
+  border:1px solid rgba(220,38,38,.5);color:var(--paper);font-family:var(--mono);
+  font-size:11px;letter-spacing:.2em;text-transform:uppercase;padding:14px 26px;transition:background .25s}
+.cfoot .reenter:hover{background:rgba(220,38,38,.15)}
+.cfoot .credit{margin-top:30px;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--ash);opacity:.7}
+@media(max-width:900px){.cgrid{grid-template-columns:1fr}}
+@media(max-width:760px){#beat{left:20px;bottom:96px;max-width:300px}.panel{padding:30px 24px}#hud-hint{display:none}}
+</style>
+</head>
+<body>
+
+<div id="vignette"></div>
+<div class="hud" id="hud-logo">
+  <svg width="16" height="16" viewBox="0 0 22 22"><path d="M11 1 L21 20 L1 20 Z" fill="none" stroke="#dc2626" stroke-width="2"/></svg>
+  GENOME_FIREWALL
+</div>
+<div class="hud" id="hud-status">MODE // <b>DEFENSIVE</b></div>
+<div class="hud" id="hud-depth">DEPTH // <b id="depthVal">000</b> · <span class="zone" id="zoneVal">HELIX</span></div>
+<div class="hud" id="hud-progress"><i id="progBar"></i></div>
+<div class="hud" id="hud-hint">scroll to travel<br>move mouse to look</div>
+
+<div id="beat">
+  <div class="bk" id="beatK">01 // ENTER THE GENOME</div>
+  <div class="bt" id="beatT">The answer is already sequenced in.</div>
+  <div class="bs" id="beatS">One reconstructed bacterial genome. Every resistance gene, every mutation — written down before any lab test begins.</div>
+</div>
+
+<div id="endpanel">
+  <div class="panel">
+    <div class="pk">INSIDE THE WALL // ANTIBIOTIC-RESPONSE REPORT</div>
+    <h2>sample_042.fasta</h2>
+    <div class="meta">escherichia coli · quality passed · research prototype</div>
+    <div class="rrow head"><span>antibiotic</span><span>verdict</span><span class="conf">conf</span></div>
+    <div class="rrow"><span class="drug">ciprofloxacin</span><span class="v-f">[ FAIL ]</span><span class="conf">0.91</span></div>
+    <div class="rrow"><span class="drug">ceftriaxone</span><span class="v-f">[ FAIL ]</span><span class="conf">0.84</span></div>
+    <div class="rrow"><span class="drug">meropenem</span><span class="v-w">[ WORK ]</span><span class="conf">0.88</span></div>
+    <div class="rrow"><span class="drug">gentamicin</span><span class="v-n">[ NO-CALL ]</span><span class="conf">—</span></div>
+    <p class="banner"><b>Decision support — not a decision.</b> Every prediction must be confirmed
+       by standard laboratory testing.</p>
+    <div class="cta">
+      <button class="btn" id="ctaAnalyze">Analyze a Genome</button>
+      <button class="ghost-l" id="ctaHow">how it works</button>
+    </div>
+  </div>
+</div>
+
+<div id="intro">
+  <div class="ik">HACK-NATION · CHALLENGE 06</div>
+  <h1>GENOME<br><span>FIREWALL</span></h1>
+  <p class="is">an ai defense system against superbugs.<br>
+     dna becomes data. data becomes the wall.<br>
+     strictly defensive — never a treatment decision.</p>
+  <div class="go">SCROLL TO ENTER</div>
+</div>
+
+<div id="content">
+  <section class="csec" id="how">
+    <div class="ck">The System</div>
+    <h2>Three modules.<br>One defensive layer.</h2>
+    <p class="cs">Strictly protective by construction — Genome Firewall predicts and explains
+       resistance that already exists. It never designs, modifies, or suggests changes to an organism.</p>
+    <div class="cgrid">
+      <div class="citem"><div class="ci">MODULE 01</div><h3>Genome Reader</h3>
+        <p>A reconstructed FASTA is annotated with NCBI <b>AMRFinderPlus</b> — known resistance
+           genes and point mutations mapped into a documented, repeatable feature space.</p></div>
+      <div class="citem"><div class="ci">MODULE 02</div><h3>Predictor</h3>
+        <p>One calibrated model per antibiotic, trained only on <b>laboratory-measured outcomes</b> —
+           de-duplicated by genetic similarity so it learns resistance, never look-alikes.</p></div>
+      <div class="citem"><div class="ci">MODULE 03</div><h3>Decision Report</h3>
+        <p>Every drug gets a verdict, calibrated confidence, and an evidence category.
+           Weak or unfamiliar evidence returns a <b>no-call</b> — a strength, not a failure.</p></div>
+    </div>
+  </section>
+
+  <section class="csec" id="safety">
+    <div class="ck">Responsibility</div>
+    <h2>Built to be trusted,<br>not just to be right.</h2>
+    <div class="cgrid">
+      <div class="citem"><div class="ci">NO DECISIONING</div><h3>Never a treatment call</h3>
+        <p>The report is decision support for professionals. Every result carries the requirement:
+           <b>confirm with standard laboratory testing.</b></p></div>
+      <div class="citem"><div class="ci">HONEST UNCERTAINTY</div><h3>Calibrated, with no-calls</h3>
+        <p>Confidence scores are calibrated against reality. Weak, conflicting, or unseen-group
+           evidence returns <b>no-call</b> instead of false confidence.</p></div>
+      <div class="citem"><div class="ci">HONEST GENERALIZATION</div><h3>Grouped splits</h3>
+        <p>Near-identical genomes never cross train/test. Performance is reported by genetic group,
+           including groups <b>never seen in training.</b></p></div>
+      <div class="citem"><div class="ci">HONEST EXPLANATIONS</div><h3>Evidence classes</h3>
+        <p>Known resistance markers are separated from statistical associations.
+           A feature-importance score is <b>not</b> a biological cause.</p></div>
+      <div class="citem"><div class="ci">DEFENSIVE BY DESIGN</div><h3>No organism design</h3>
+        <p>The system never generates, modifies, or optimizes organisms.
+           It exists to slow resistance and protect patients.</p></div>
+      <div class="citem"><div class="ci">CLEAN DATA</div><h3>Lab-measured only</h3>
+        <p>Training labels come from laboratory tests in BV-BRC — never computational phenotype
+           predictions. <b>No circular learning.</b></p></div>
+    </div>
+  </section>
+
+  <footer class="cfoot">
+    <p>// research prototype — predictions from historical genome data do not prove clinical safety
+       or accuracy. genome firewall never approves, denies, scores, or ranks treatments,
+       and never generates or modifies organisms. strictly defensive, by construction.</p>
+    <button class="reenter" id="reenter">Re-enter the experience</button>
+    <div class="credit">Hack-Nation · 6th Global AI Hackathon · Challenge 06</div>
+  </footer>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const CHAR = 0x14110f;
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(CHAR, 0.02);
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 500);
+camera.position.set(0, 0, 8);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(CHAR);
+renderer.domElement.id = 'gl';
+document.body.appendChild(renderer.domElement);
+
+const rnd = (a, b) => a + Math.random() * (b - a);
+const ss = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+const PAPER = [.97, .96, .95], GRAY = [.42, .4, .38], REDC = [1, .2, .18], DIMR = [.5, .1, .1];
+
+function batch(){
+  const pos = [], col = [];
+  return {
+    seg(a, b, c){ pos.push(a[0], a[1], a[2], b[0], b[1], b[2]); col.push(...c, ...c); },
+    build(opacity){
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      return new THREE.LineSegments(g, new THREE.LineBasicMaterial({
+        vertexColors: true, transparent: true, opacity, fog: true }));
+    }
+  };
+}
+
+/* ============ ZONE 1: wireframe DNA ============ */
+const H_END = -150;
+function hp(phase, t){
+  const z = H_END * t;
+  const widen = 1 + t * t * 2.6;
+  const untwist = 1 - t * .62;
+  const flat = 1 - t * t * .82;
+  const a = z * .40 * untwist + phase;
+  const R = 3.2 * widen;
+  return [Math.cos(a) * R, Math.sin(a) * R * flat, z];
+}
+const dna = batch();
+const rungs = [];
+{
+  const SEG = 460;
+  for (const phase of [0, Math.PI]){
+    const c = phase === 0 ? PAPER : [.72, .7, .68];
+    for (let i = 0; i < SEG; i++) dna.seg(hp(phase, i / SEG), hp(phase, (i + 1) / SEG), c);
+  }
+  for (let i = 0; i < 54; i++){
+    const t = .015 + (i / 54) * .955;
+    for (const phase of [0, Math.PI]){
+      const c0 = hp(phase, t), c1 = hp(phase, t + .004);
+      const tan = [c1[0] - c0[0], c1[1] - c0[1], c1[2] - c0[2]];
+      const tl = Math.hypot(...tan) || 1;
+      const T = tan.map(v => v / tl);
+      let N = [-T[1], T[0], 0];
+      const nl = Math.hypot(...N) || 1; N = N.map(v => v / nl);
+      const B = [T[1]*N[2]-T[2]*N[1], T[2]*N[0]-T[0]*N[2], T[0]*N[1]-T[1]*N[0]];
+      const r = .34, K = 12;
+      for (let k = 0; k < K; k++){
+        const a1 = k / K * Math.PI * 2, a2 = (k + 1) / K * Math.PI * 2;
+        dna.seg(
+          [c0[0]+N[0]*Math.cos(a1)*r+B[0]*Math.sin(a1)*r, c0[1]+N[1]*Math.cos(a1)*r+B[1]*Math.sin(a1)*r, c0[2]+N[2]*Math.cos(a1)*r+B[2]*Math.sin(a1)*r],
+          [c0[0]+N[0]*Math.cos(a2)*r+B[0]*Math.sin(a2)*r, c0[1]+N[1]*Math.cos(a2)*r+B[1]*Math.sin(a2)*r, c0[2]+N[2]*Math.cos(a2)*r+B[2]*Math.sin(a2)*r], GRAY);
+      }
+    }
+  }
+  for (let i = 0; i < 90; i++){
+    const t = .02 + (i / 90) * .96;
+    const a = hp(0, t), b = hp(Math.PI, t);
+    const red = Math.random() < .14;
+    dna.seg(a, b, red ? REDC : [.6, .58, .56]);
+    rungs.push({ a, b, z: a[2] });
+  }
+}
+scene.add(dna.build(.92));
+
+/* ============ dodge path ============ */
+function distToAxis(r){
+  const [ax, ay] = r.a, [bx, by] = r.b;
+  const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy || 1;
+  let u = -(ax * dx + ay * dy) / L2; u = Math.max(0, Math.min(1, u));
+  const px = ax + dx * u, py = ay + dy * u;
+  return { d: Math.hypot(px, py), px, py };
+}
+const PATH = [];
+{
+  const CLEAR = 1.5;
+  for (let z = 4; z >= H_END; z -= .5){
+    let ox = 0, oy = 0, worst = CLEAR;
+    for (const r of rungs){
+      if (Math.abs(r.z - z) > 1.2) continue;
+      const { d, px, py } = distToAxis(r);
+      if (d < worst){
+        worst = d;
+        const need = CLEAR - d;
+        if (d > .001){ ox = -(px / d) * need; oy = -(py / d) * need; }
+        else { ox = need; oy = 0; }
+      }
+    }
+    PATH.push({ z, ox: Math.max(-2, Math.min(2, ox)), oy: Math.max(-1.6, Math.min(1.6, oy)) });
+  }
+  for (let p = 0; p < 4; p++)
+    for (let i = 1; i < PATH.length - 1; i++){
+      PATH[i].ox = (PATH[i-1].ox + PATH[i].ox * 2 + PATH[i+1].ox) / 4;
+      PATH[i].oy = (PATH[i-1].oy + PATH[i].oy * 2 + PATH[i+1].oy) / 4;
+    }
+}
+function corridor(z){
+  if (z >= 4 || z <= H_END) return [0, 0];
+  const f = (4 - z) / .5, i = Math.min(PATH.length - 2, Math.floor(f)), u = f - i;
+  return [PATH[i].ox + (PATH[i+1].ox - PATH[i].ox) * u,
+          PATH[i].oy + (PATH[i+1].oy - PATH[i].oy) * u];
+}
+
+/* ============ ZONE 2: lattice (per-layer for pulse wave) ============ */
+const latLayers = [];
+const latEdges = [];
+{
+  const layers = 5, perLayer = 80;
+  let prev = null;
+  const clear = (x, y) => !(Math.abs(x) < 2.1 && Math.abs(y) < 2.1);
+  const edgeClear = (a, b) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1;
+    let u = -(a[0] * dx + a[1] * dy) / L2; u = Math.max(0, Math.min(1, u));
+    return Math.hypot(a[0] + dx * u, a[1] + dy * u) > 1.6;
+  };
+  for (let l = 0; l < layers; l++){
+    const b = batch();
+    const z = -158 - l * 21, pts = [];
+    const spreadX = 11 + l * .8, spreadY = 3 + l * 1.1;
+    let placed = 0, guard = 0;
+    while (placed < perLayer && guard++ < 3000){
+      const x = rnd(-spreadX, spreadX), y = rnd(-spreadY, spreadY);
+      if (!clear(x, y)) continue;
+      pts.push([x, y, z]); placed++;
+      const c = Math.random() < .07 ? REDC : (Math.random() < .5 ? [.75, .73, .7] : GRAY);
+      b.seg([x - .22, y, z], [x + .22, y, z], c);
+      b.seg([x, y - .22, z], [x, y + .22, z], c);
+    }
+    if (prev) for (let i = 0; i < perLayer * 2; i++){
+      const a = prev[(Math.random() * prev.length) | 0], bb = pts[(Math.random() * pts.length) | 0];
+      if (!edgeClear(a, bb)) continue;
+      b.seg(a, bb, [.3, .28, .27]);
+      latEdges.push([a, bb]);
+    }
+    prev = pts;
+    const layer = b.build(.85);
+    latLayers.push(layer); scene.add(layer);
+  }
+}
+
+const signals = [];
+for (let i = 0; i < 18; i++){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(6, 3));
+  const line = new THREE.Line(g, new THREE.LineBasicMaterial({
+    color: Math.random() < .3 ? 0xdc2626 : 0xf7f5f2, transparent: true, opacity: .8 }));
+  line.userData = { e: (Math.random() * latEdges.length) | 0, u: Math.random(), sp: rnd(.12, .3) };
+  signals.push(line); scene.add(line);
+}
+
+/* ============ ZONE 3: wireframe bastion ============ */
+function wallHalf(x0, x1){
+  const b = batch();
+  for (let x = x0; x <= x1; x += 1.6)
+    for (const [z, c] of [[-330, REDC], [-333, DIMR], [-336, [.3, .06, .06]]])
+      b.seg([x, -20, z], [x, 20, z], c);
+  for (let y = -20; y <= 20; y += 1.6)
+    for (const [z, c] of [[-330, REDC], [-333, DIMR], [-336, [.3, .06, .06]]])
+      b.seg([x0, y, z], [x1, y, z], c);
+  for (let x = x0; x < x1; x += 4.8)
+    b.seg([x, -20, -330], [x + 4.8, 20, -330], [.35, .08, .08]);
+  return b.build(.9);
+}
+const wallL = wallHalf(-38, 0), wallR = wallHalf(0, 38);
+scene.add(wallL, wallR);
+
+const streams = [];
+for (let i = 0; i < 26; i++){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(6, 3));
+  const line = new THREE.Line(g, new THREE.LineBasicMaterial({
+    color: 0xdc2626, transparent: true, opacity: rnd(.25, .55) }));
+  line.userData = { x: rnd(-36, 36), y: rnd(-20, 20), h: rnd(3, 9), sp: rnd(2.5, 8) };
+  streams.push(line); scene.add(line);
+}
+
+/* ============ chamber ============ */
+const chamber = new THREE.Group();
+{
+  const dome = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(17, 1)),
+    new THREE.LineBasicMaterial({ color: 0xc9c2ba, transparent: true, opacity: .22 }));
+  dome.position.z = -352;
+  chamber.add(dome);
+  const rings = [];
+  for (let i = 0; i < 3; i++){
+    const pts = [];
+    for (let k = 0; k <= 64; k++){
+      const a = k / 64 * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * (8 + i * 3), Math.sin(a) * (8 + i * 3), 0));
+    }
+    const ring = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+      new THREE.LineBasicMaterial({ color: i === 1 ? 0xf7f5f2 : 0xdc2626, transparent: true, opacity: .3 }));
+    ring.position.z = -352;
+    ring.rotation.set(rnd(0, 3), rnd(0, 3), rnd(0, 3));
+    rings.push(ring); chamber.add(ring);
+  }
+  chamber.userData.rings = rings;
+  const floor = new THREE.GridHelper(60, 30, 0x3a3430, 0x262220);
+  floor.position.set(0, -11, -352);
+  floor.material.transparent = true; floor.material.opacity = .25;
+  chamber.add(floor);
+}
+scene.add(chamber);
+
+/* ============ travel + look + unlock ============ */
+let targetZ = 8, lookX = 0, lookY = 0, started = false, prevOX = 0, unlocked = false;
+const intro = document.getElementById('intro');
+function begin(){ if (!started){ started = true; intro.classList.add('off'); } }
+function unlock(){
+  if (unlocked) return;
+  unlocked = true;
+  document.body.classList.add('unlocked');
+  scrollTo(0, 0);
+}
+function relock(){
+  unlocked = false;
+  document.body.classList.remove('unlocked');
+}
+intro.addEventListener('click', begin);
+document.getElementById('ctaHow').addEventListener('click', unlock);
+document.getElementById('ctaAnalyze').addEventListener('click', unlock);
+document.getElementById('reenter').addEventListener('click', relock);
+addEventListener('wheel', e => {
+  if (unlocked) return;
+  e.preventDefault(); begin();
+  if (targetZ <= -330 && e.deltaY > 0){ unlock(); return; }
+  targetZ = Math.max(-330, Math.min(8, targetZ - e.deltaY * .05));
+}, { passive: false });
+let lastTouch = null;
+addEventListener('touchstart', e => { begin(); lastTouch = e.touches[0].clientY; }, { passive: true });
+addEventListener('touchmove', e => {
+  if (unlocked) return;
+  const y = e.touches[0].clientY;
+  if (lastTouch !== null){
+    if (targetZ <= -330 && lastTouch - y > 4){ unlock(); return; }
+    targetZ = Math.max(-330, Math.min(8, targetZ + (y - lastTouch) * .12));
+  }
+  lastTouch = y;
+}, { passive: true });
+addEventListener('mousemove', e => {
+  lookX = e.clientX / innerWidth - .5; lookY = e.clientY / innerHeight - .5;
+});
+
+/* ============ beats ============ */
+const beats = [
+  { z: 8,    k: '01 // ENTER THE GENOME',  t: 'The answer is already sequenced in.', s: 'One reconstructed bacterial genome. Every resistance gene, every mutation — written down before any lab test begins.' },
+  { z: -70,  k: '01 // THE STREAM',        t: 'DNA becomes data.',                   s: 'Two backbones, ninety glowing base pairs. The ship weaves between them while AMRFinderPlus reads the markers ahead.' },
+  { z: -138, k: '02 // THE UNRAVELING',    t: 'The helix lets go of its shape.',     s: 'Features leave the molecule and become a lattice of weighted signals — one calibrated model per antibiotic.' },
+  { z: -258, k: '03 // THE WALL',          t: 'It decides nothing. It warns.',       s: 'Likely to fail. Likely to work. No-call. Approach — and it will open.' },
+];
+const ZONES = [[-140, 'HELIX'], [-250, 'LATTICE'], [-318, 'THE WALL'], [-9999, 'CHAMBER']];
+const beatEl = document.getElementById('beat');
+const bK = document.getElementById('beatK'), bT = document.getElementById('beatT'), bS = document.getElementById('beatS');
+const depthEl = document.getElementById('depthVal'), zoneEl = document.getElementById('zoneVal');
+const progBar = document.getElementById('progBar');
+const endpanel = document.getElementById('endpanel');
+let beatIdx = -1;
+
+/* ============ loop ============ */
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  camera.position.z += (targetZ - camera.position.z) * .055;
+  const z = camera.position.z;
+
+  const [ox, oy] = corridor(z);
+  camera.position.x += (ox - camera.position.x) * .1;
+  camera.position.y += (oy + Math.sin(t * .8) * .1 - camera.position.y) * .1;
+  const latVel = ox - prevOX; prevOX = ox;
+  camera.rotation.z += ((-latVel * 6) - camera.rotation.z) * .08;
+  camera.rotation.y += ((-lookX * .3) - camera.rotation.y) * .06;
+  camera.rotation.x += ((-lookY * .18) - camera.rotation.x) * .06;
+
+  /* lattice pulse wave */
+  for (let l = 0; l < latLayers.length; l++)
+    latLayers[l].material.opacity = .5 + .35 * Math.sin(t * 2 - l * .9);
+
+  for (const s of signals){
+    s.userData.u += s.userData.sp * .016;
+    if (s.userData.u > .95){ s.userData.u = 0; s.userData.e = (Math.random() * latEdges.length) | 0; }
+    const [a, b] = latEdges[s.userData.e];
+    const u0 = s.userData.u, u1 = Math.min(1, u0 + .05);
+    const p = s.geometry.attributes.position;
+    p.setXYZ(0, a[0] + (b[0]-a[0])*u0, a[1] + (b[1]-a[1])*u0, a[2] + (b[2]-a[2])*u0);
+    p.setXYZ(1, a[0] + (b[0]-a[0])*u1, a[1] + (b[1]-a[1])*u1, a[2] + (b[2]-a[2])*u1);
+    p.needsUpdate = true;
+  }
+
+  for (const s of streams){
+    s.userData.y -= s.userData.sp * .016;
+    if (s.userData.y < -22) s.userData.y = 22;
+    const p = s.geometry.attributes.position;
+    p.setXYZ(0, s.userData.x, s.userData.y, -327.8);
+    p.setXYZ(1, s.userData.x, s.userData.y + s.userData.h, -327.8);
+    p.needsUpdate = true;
+  }
+
+  const open = ss((-z - 288) / 26);
+  wallL.position.x += ((-open * 42) - wallL.position.x) * .07;
+  wallR.position.x += ((open * 42) - wallR.position.x) * .07;
+
+  for (const r of chamber.userData.rings){ r.rotation.x += .0016; r.rotation.y += .0022; }
+
+  const near = ss((-z - 240) / 50), inside = ss((-z - 316) / 12);
+  scene.fog.density = .02 + near * .012 - inside * .014;
+
+  depthEl.textContent = String(Math.max(0, Math.round(8 - z))).padStart(3, '0');
+  zoneEl.textContent = ZONES.find(([lim]) => z >= lim)?.[1] ?? 'CHAMBER';
+  progBar.style.width = (ss((8 - z) / 338) * 100).toFixed(1) + '%';
+
+  let bi = 0;
+  for (let i = 0; i < beats.length; i++) if (z <= beats[i].z + 14) bi = i;
+  if (bi !== beatIdx){
+    beatIdx = bi; const b = beats[bi];
+    beatEl.style.opacity = 0;
+    setTimeout(() => { bK.textContent = b.k; bT.textContent = b.t; bS.textContent = b.s;
+      beatEl.style.opacity = 1; }, 260);
+  }
+  beatEl.style.opacity = (z < -286) ? 0 : 1;
+  endpanel.classList.toggle('on', z < -318 && !unlocked);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

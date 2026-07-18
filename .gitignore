@@ -1,0 +1,21 @@
+# --- data (large, regenerable via pull scripts) ---
+data/genomes/
+data/labels_*.csv
+data/genome_ids_*.txt
+data/failed.txt
+data/clean/
+data/smoke_*.tsv
+
+# --- python ---
+.venv/
+__pycache__/
+*.pyc
+
+# --- features / models / reports (regenerable) ---
+features/*.tsv
+features/feature_matrix.csv
+models/
+reports/
+
+# --- os ---
+.DS_Store

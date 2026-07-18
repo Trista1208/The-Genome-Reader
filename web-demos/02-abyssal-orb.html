@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — B · Abyssal Orb</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+:root{
+  --abyss:#012624; --deep:#011d1c; --kelp:#003734;
+  --mist:#edfffe; --white:#ffffff; --silver:#bbc7c6; --phosphor:#fde9ff;
+  --aurora:linear-gradient(90deg, rgb(203,255,252) 0%, rgb(237,255,254) 26%, rgb(255,253,250) 48%, rgb(250,209,255) 89%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--abyss);color:var(--white);
+  font-family:'Inter','DM Sans',ui-sans-serif,system-ui,sans-serif;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:#00827c;color:#fff}
+
+/* ---------- nav ---------- */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:0 48px;height:80px;
+  background:rgba(1,38,36,.55);backdrop-filter:blur(14px)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;
+  font-weight:500;font-size:15px;letter-spacing:.02em}
+.logo svg{display:block}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{color:var(--silver);text-decoration:none;font-size:12px;font-weight:500;
+  letter-spacing:.12em;text-transform:uppercase;transition:color .25s}
+.nav-links a:hover{color:#fff}
+.btn{display:inline-block;background:var(--aurora);color:#101c1b;text-decoration:none;
+  font-size:13px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;
+  padding:13px 22px;border-radius:6px;border:0;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 44px rgba(203,255,252,.28)}
+.btn.big{padding:17px 30px;font-size:14px}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;position:relative;padding:120px 24px 60px}
+#orb{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero > *{position:relative;z-index:2}
+.kicker{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--mist);margin-bottom:28px;opacity:.85}
+h1{font-size:clamp(44px,5.6vw,86px);font-weight:500;line-height:1.0;
+  letter-spacing:-.045em;max-width:900px;margin-bottom:28px}
+.sub{font-size:16px;font-weight:400;line-height:1.5;color:var(--silver);
+  max-width:560px;margin-bottom:44px}
+.sub b{color:var(--mist);font-weight:500}
+
+/* ---------- stats ---------- */
+.stats{max-width:1200px;margin:0 auto;padding:80px 48px 100px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:40px;text-align:center}
+.stat .num{font-size:clamp(56px,5.6vw,86px);font-weight:500;letter-spacing:-3.5px;
+  line-height:1;color:var(--phosphor)}
+.stat .lbl{margin-top:16px;font-size:13px;font-weight:400;letter-spacing:.055em;
+  text-transform:uppercase;color:var(--mist)}
+.stat p{margin-top:10px;font-size:14px;color:var(--silver);line-height:1.5}
+
+/* ---------- explore ---------- */
+section{max-width:1440px;margin:0 auto;padding:68px 48px}
+.sec-label{font-size:12px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--silver);margin-bottom:22px}
+.explore{display:grid;grid-template-columns:1.15fr .85fr;gap:64px;align-items:center}
+.cards{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--kelp);border-radius:16px;padding:36px;position:relative;transition:background .3s}
+.card:hover{background:#01403c}
+.card h3{font-size:36px;font-weight:500;line-height:1;letter-spacing:-.02em;margin-bottom:14px}
+.card h3 span{color:var(--phosphor);font-size:20px;vertical-align:super;letter-spacing:0}
+.card p{font-size:16px;font-weight:400;line-height:1.45;color:var(--silver);max-width:520px}
+.arrow{position:absolute;top:36px;right:36px;width:32px;height:32px;border-radius:6px;
+  background:rgba(3,81,75,.5);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:15px;transition:background .3s}
+.card:hover .arrow{background:rgba(3,81,75,.95)}
+.mol{display:flex;align-items:center;justify-content:center}
+.mol svg{width:100%;max-width:460px;height:auto;opacity:.9}
+
+/* ---------- report ---------- */
+.well{background:var(--deep);border-radius:16px;padding:80px 64px;margin-top:68px}
+.well h2{font-size:clamp(30px,3vw,48px);font-weight:500;letter-spacing:-.04em;line-height:1;margin-bottom:8px}
+.well .meta{font-size:13px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;margin-bottom:44px}
+.rrow{display:grid;grid-template-columns:1.3fr 1fr .7fr 1.5fr;gap:24px;align-items:center;
+  padding:20px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.rrow.head{border-bottom:1px solid rgba(255,255,255,.14)}
+.rrow.head span{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--silver)}
+.drug{font-size:20px;font-weight:500}
+.pill{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 14px;border-radius:6px}
+.p-fail{background:rgba(253,233,255,.12);color:var(--phosphor)}
+.p-work{background:rgba(203,255,252,.10);color:#cbfffc}
+.p-nocall{background:rgba(187,199,198,.10);color:var(--silver)}
+.conf{font-size:22px;font-weight:500;color:var(--mist)}
+.evi{font-size:14px;color:var(--silver);line-height:1.45}
+.banner{margin-top:36px;font-size:14px;color:var(--silver);line-height:1.5}
+.banner b{color:var(--phosphor);font-weight:500}
+
+footer{margin-top:68px;background:var(--deep);padding:120px 48px 80px;text-align:center}
+footer .big{font-size:clamp(40px,4.6vw,72px);font-weight:500;letter-spacing:-.04em;line-height:1;margin-bottom:36px}
+footer p{font-size:13px;color:var(--silver);max-width:640px;margin:48px auto 0;line-height:1.6}
+footer span{display:block;margin-top:22px;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--silver);opacity:.7}
+
+@media(max-width:960px){
+  .explore{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr}
+  .rrow{grid-template-columns:1fr 1fr;row-gap:10px}
+  .well{padding:48px 28px}
+  .nav-links a:not(.btn){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <svg width="20" height="20" viewBox="0 0 20 20">
+      <circle cx="10" cy="10" r="8.5" fill="none" stroke="#cbfffc" stroke-width="1.4"/>
+      <circle cx="10" cy="10" r="3.4" fill="#fde9ff"/>
+    </svg>
+    Genome Firewall
+  </a>
+  <div class="nav-links">
+    <a href="#explore">System</a><a href="#report">Report</a><a href="#safety">Safety</a>
+    <a class="btn" href="#report">Run a Genome</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <canvas id="orb"></canvas>
+  <div class="kicker">Biosecurity · Artificial Intelligence</div>
+  <h1>Defense against superbugs, written in DNA.</h1>
+  <p class="sub">Genome Firewall turns one reconstructed bacterial genome into an early
+    antibiotic-response prediction — <b>likely to fail, likely to work, or an honest no-call</b> —
+    days before standard laboratory results.</p>
+  <a class="btn big" href="#report">Analyze a Genome</a>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="num">4.7M</div>
+    <div class="lbl">Deaths associated with AMR / year</div>
+    <p>Over one million each year directly attributable to resistant infection.</p></div>
+  <div class="stat"><div class="num">72h</div>
+    <div class="lbl">Standard lab turnaround</div>
+    <p>Days of best-guess treatment the genome could have informed.</p></div>
+  <div class="stat"><div class="num">3</div>
+    <div class="lbl">Verdicts, never decisions</div>
+    <p>Fail · work · no-call — uncertainty is surfaced, never hidden.</p></div>
+</div>
+
+<section id="explore">
+  <div class="sec-label">The System</div>
+  <div class="explore">
+    <div class="cards">
+      <div class="card"><h3>Genome Reader <span>01</span></h3>
+        <p>A reconstructed FASTA becomes model features through NCBI AMRFinderPlus — known
+           resistance genes and point mutations, mapped repeatably and documented end to end.</p>
+        <div class="arrow">↗</div></div>
+      <div class="card"><h3>Predictor <span>02</span></h3>
+        <p>One calibrated model per antibiotic, trained only on laboratory-measured outcomes,
+           de-duplicated by genetic similarity so it learns resistance — not look-alikes.</p>
+        <div class="arrow">↗</div></div>
+      <div class="card"><h3>Decision Report <span>03</span></h3>
+        <p>Every drug returns a verdict, calibrated confidence, and an evidence category.
+           Weak or unfamiliar evidence yields a no-call — by design.</p>
+        <div class="arrow">↗</div></div>
+    </div>
+    <div class="mol">
+      <svg viewBox="0 0 460 460" fill="none">
+        <g stroke="rgba(237,255,254,.35)" stroke-width="1">
+          <line x1="120" y1="90" x2="230" y2="150"/><line x1="230" y1="150" x2="330" y2="90"/>
+          <line x1="230" y1="150" x2="180" y2="270"/><line x1="230" y1="150" x2="320" y2="260"/>
+          <line x1="180" y1="270" x2="110" y2="380"/><line x1="180" y1="270" x2="290" y2="370"/>
+          <line x1="320" y1="260" x2="290" y2="370"/><line x1="330" y1="90" x2="380" y2="200"/>
+          <line x1="320" y1="260" x2="380" y2="200"/><line x1="120" y1="90" x2="90" y2="200"/>
+          <line x1="90" y1="200" x2="180" y2="270"/>
+        </g>
+        <g fill="#edfffe">
+          <circle cx="120" cy="90" r="7"/><circle cx="230" cy="150" r="9"/>
+          <circle cx="330" cy="90" r="7"/><circle cx="180" cy="270" r="7"/>
+          <circle cx="320" cy="260" r="7"/><circle cx="110" cy="380" r="6"/>
+          <circle cx="290" cy="370" r="8"/><circle cx="380" cy="200" r="6"/>
+          <circle cx="90" cy="200" r="5"/>
+        </g>
+        <circle cx="230" cy="150" r="46" stroke="rgba(253,233,255,.4)" stroke-width="1" stroke-dasharray="3 6"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="well" id="report">
+    <h2>Sample report</h2>
+    <div class="meta">sample_042.fasta · Escherichia coli · research prototype</div>
+    <div class="rrow head"><span>Antibiotic</span><span>Verdict</span><span>Confidence</span><span>Evidence</span></div>
+    <div class="rrow"><span class="drug">Ciprofloxacin</span><span><span class="pill p-fail">Likely to fail</span></span><span class="conf">0.91</span><span class="evi">Known resistance mutation — gyrA S83L</span></div>
+    <div class="rrow"><span class="drug">Ceftriaxone</span><span><span class="pill p-fail">Likely to fail</span></span><span class="conf">0.84</span><span class="evi">Known resistance gene — blaCTX-M-15</span></div>
+    <div class="rrow"><span class="drug">Meropenem</span><span><span class="pill p-work">Likely to work</span></span><span class="conf">0.88</span><span class="evi">No resistance markers · molecular target present</span></div>
+    <div class="rrow"><span class="drug">Gentamicin</span><span><span class="pill p-nocall">No-call</span></span><span class="conf">—</span><span class="evi">Genome unlike training data — evidence too weak to predict</span></div>
+    <p class="banner"><b>Decision support, never a decision.</b> Every prediction must be confirmed
+       by standard laboratory testing before any clinical use.</p>
+  </div>
+</section>
+
+<footer id="safety">
+  <div class="big">Strictly defensive,<br>by construction.</div>
+  <a class="btn big" href="#report">Run the Demo</a>
+  <p>Research prototype. Genome Firewall predicts and explains resistance that already exists.
+     It never designs, modifies, or optimizes organisms — and every result requires confirmation
+     by standard laboratory testing.</p>
+  <span>Hack-Nation · 6th Global AI Hackathon · Challenge 06</span>
+</footer>
+
+<script>
+(() => {
+  const cv = document.getElementById('orb'), ctx = cv.getContext('2d');
+  let W, H, dpr, mx = 0;
+  function resize(){
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize(); addEventListener('resize', resize);
+  addEventListener('mousemove', e => { mx = (e.clientX / innerWidth - .5) * .5; });
+
+  // Fibonacci sphere of bioluminescent dots
+  const N = 1400, pts = [];
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++){
+    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = GA * i;
+    pts.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r,
+      ph: Math.random() * 6.28, pink: Math.random() < .12 });
+  }
+  let rot = 0;
+  function frame(){
+    rot += 0.0022;
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, cy = H * .52, R = Math.min(W, H) * .42, f = 1000;
+    const spin = rot + mx;
+    for (const p of pts){
+      const x1 = p.x * Math.cos(spin) - p.z * Math.sin(spin);
+      const z1 = p.x * Math.sin(spin) + p.z * Math.cos(spin);
+      const breathe = 1 + Math.sin(rot * 3 + p.ph) * .02;
+      const X = x1 * R * breathe, Y = p.y * R * breathe, Z = z1 * R;
+      const sc = f / (f + Z + 250);
+      const depth = (1 - (Z / R + 1) / 2);
+      const a = .06 + depth * .8;
+      const s = (p.pink ? 1.7 : 1.25) * sc * (1 + depth);
+      ctx.globalAlpha = a;
+      ctx.fillStyle = p.pink && depth > .55 ? '#fde9ff' : (depth > .72 ? '#edfffe' : '#39b8ac');
+      ctx.beginPath(); ctx.arc(cx + X * sc, cy + Y * sc, s, 0, 6.283); ctx.fill();
+    }
+    // faint equator ring
+    ctx.globalAlpha = .12; ctx.strokeStyle = '#cbfffc'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(cx, cy, R * .78, R * .2, 0, 0, 6.283); ctx.stroke();
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>

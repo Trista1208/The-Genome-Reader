@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — F · Monument</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;700&family=JetBrains+Mono:wght@400;700&display=swap');
+:root{
+  --navy:#020a19; --navy-2:#052261; --ice:#d5e0ff;
+  --ice-10:rgba(213,224,255,.10); --ice-30:rgba(213,224,255,.30);
+  --ice-50:rgba(213,224,255,.50); --ice-80:rgba(213,224,255,.80);
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--navy);color:var(--ice);
+  font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--ice);color:var(--navy)}
+
+/* ---------- nav ---------- */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:26px 44px;font-family:var(--mono);
+  font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  background:linear-gradient(rgba(2,10,25,.85),transparent)}
+.logo{color:var(--ice);text-decoration:none;font-weight:700}
+.nav-links{display:flex;gap:34px;align-items:center}
+.nav-links a{color:var(--ice-50);text-decoration:none;transition:color .2s}
+.nav-links a:hover{color:var(--ice)}
+.nav-links .btn{border:1px solid var(--ice-30);padding:12px 22px;color:var(--ice);
+  text-decoration:none;transition:background .2s,color .2s}
+.nav-links .btn:hover{background:var(--ice);color:var(--navy)}
+
+/* ---------- shared ---------- */
+.wrap{max-width:1560px;margin:0 auto;padding:0 44px}
+.kick{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ice-50);margin-bottom:44px}
+.kick::before{content:"( ";color:var(--ice-30)}
+.kick::after{content:" )";color:var(--ice-30)}
+.giant{font-weight:200;letter-spacing:-.04em;line-height:.94;
+  font-size:clamp(56px,9.5vw,170px);text-transform:none}
+.giant b{font-weight:700}
+.giant .out{color:transparent;-webkit-text-stroke:1.5px var(--ice-80)}
+.giant .dim{color:var(--ice-30)}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:140px 0 70px}
+.hero .giant{margin-bottom:60px}
+.hero-meta{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap}
+.hero-lede{font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--ice-50);max-width:480px}
+.hero-lede b{color:var(--ice);font-weight:400}
+.hero-cta{display:flex;gap:26px;align-items:center}
+.btn-solid{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  background:var(--ice);color:var(--navy);text-decoration:none;padding:18px 30px;font-weight:700;
+  transition:opacity .2s}
+.btn-solid:hover{opacity:.85}
+.btn-line{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ice-50);text-decoration:none;border-bottom:1px solid var(--ice-30);padding-bottom:6px}
+.btn-line:hover{color:var(--ice)}
+
+/* ---------- ticker ---------- */
+.ticker{border-top:1px solid var(--ice-10);border-bottom:1px solid var(--ice-10);
+  overflow:hidden;padding:22px 0;white-space:nowrap}
+.ticker-track{display:inline-block;animation:tick 36s linear infinite}
+.ticker span{font-family:var(--mono);font-size:13px;letter-spacing:.24em;
+  color:var(--ice-50);text-transform:uppercase;padding:0 34px}
+.ticker span.b{color:var(--ice);font-weight:700}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ---------- statements ---------- */
+.statement{padding:150px 0 130px;border-bottom:1px solid var(--ice-10)}
+.statement .giant{font-size:clamp(44px,7vw,120px);margin-bottom:54px}
+.statement p{font-family:var(--mono);font-size:13px;line-height:1.9;
+  color:var(--ice-50);max-width:520px}
+.statement p b{color:var(--ice);font-weight:400}
+.num-tag{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--ice-30)}
+
+/* ---------- stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--ice-10)}
+.stat{padding:80px 44px 90px;border-left:1px solid var(--ice-10)}
+.stat:first-child{border-left:0}
+.stat .n{font-size:clamp(60px,7vw,130px);font-weight:200;letter-spacing:-.04em;line-height:.95}
+.stat .n b{font-weight:700}
+.stat .k{margin-top:26px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ice-50)}
+.stat p{margin-top:14px;font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--ice-30)}
+
+/* ---------- report ---------- */
+.report{padding:150px 0}
+.rrow{display:grid;grid-template-columns:1.4fr 1fr .6fr 1.6fr;gap:30px;align-items:baseline;
+  padding:34px 0;border-bottom:1px solid var(--ice-10)}
+.rrow.head{border-bottom:1px solid var(--ice-30);padding-bottom:20px}
+.rrow.head span{font-family:var(--mono);font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ice-30)}
+.drug{font-size:clamp(26px,2.6vw,44px);font-weight:200;letter-spacing:-.03em}
+.v{font-family:var(--mono);font-size:12px;letter-spacing:.24em;font-weight:700}
+.v-fail{color:var(--ice)}
+.v-work{color:transparent;-webkit-text-stroke:1px var(--ice-80)}
+.v-nocall{color:var(--ice-30);font-weight:400}
+.conf{font-size:clamp(22px,2vw,34px);font-weight:200;color:var(--ice-80)}
+.evi{font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--ice-50)}
+.banner{margin-top:52px;font-family:var(--mono);font-size:12px;line-height:1.9;
+  color:var(--ice-50);max-width:640px;border-left:1px solid var(--ice-30);padding-left:22px}
+.banner b{color:var(--ice);font-weight:400}
+
+/* ---------- footer ---------- */
+footer{padding:120px 0 60px;position:relative;overflow:hidden}
+footer .water{font-weight:700;letter-spacing:-.04em;line-height:.85;
+  font-size:clamp(80px,14.5vw,260px);color:var(--navy-2);user-select:none;
+  white-space:nowrap;margin-left:-.04em}
+footer .row{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;
+  align-items:flex-end;margin-top:70px}
+footer p{font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--ice-30);max-width:600px}
+footer span{font-family:var(--mono);font-size:10px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ice-30)}
+
+@media(max-width:960px){
+  .stats{grid-template-columns:1fr}
+  .stat{border-left:0;border-top:1px solid var(--ice-10)}
+  .rrow{grid-template-columns:1fr 1fr;row-gap:10px}
+  .nav-links a:not(.btn){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">GENOME&nbsp;FIREWALL</a>
+  <div class="nav-links">
+    <a href="#system">System</a><a href="#report">Report</a><a href="#safety">Safety</a>
+    <a class="btn" href="#report">Run&nbsp;a&nbsp;Genome</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kick">AI defense against superbugs — Challenge 06</div>
+    <h1 class="giant">We read<br><b>the genome</b><br>before the <span class="out">lab</span><br><span class="dim">can.</span></h1>
+    <div class="hero-meta">
+      <p class="hero-lede">One reconstructed bacterial genome in — per-antibiotic verdicts out.
+        <b>Likely to fail. Likely to work. No-call.</b> Calibrated confidence, honest evidence,
+        and never a treatment decision.</p>
+      <div class="hero-cta">
+        <a class="btn-solid" href="#report">Analyze a Genome</a>
+        <a class="btn-line" href="#system">The System</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="ticker"><div class="ticker-track" id="tick">
+  <span>A·C·G·T</span><span class="b">likely to fail</span><span>gyrA S83L</span><span class="b">no-call</span>
+  <span>blaCTX-M-15</span><span class="b">calibrated</span><span>AMRFinderPlus</span><span class="b">grouped splits</span>
+  <span>confirm with lab testing</span><span class="b">never a decision</span>
+</div></div>
+
+<section class="statement" id="system">
+  <div class="wrap">
+    <div class="kick"><span class="num-tag">01</span>&nbsp;&nbsp;Genome Reader</div>
+    <h2 class="giant">The answer<br>is already<br><b>written</b> <span class="out">down.</span></h2>
+    <p>A reconstructed FASTA is annotated with NCBI AMRFinderPlus — known resistance genes and
+       point mutations mapped into a documented, repeatable feature space.
+       <b>From DNA to features, no magic.</b></p>
+  </div>
+</section>
+
+<section class="statement">
+  <div class="wrap">
+    <div class="kick"><span class="num-tag">02</span>&nbsp;&nbsp;Predictor</div>
+    <h2 class="giant">One model.<br>One drug.<br><b>No</b> <span class="dim">shortcuts.</span></h2>
+    <p>One calibrated model per antibiotic, trained only on laboratory-measured outcomes,
+       de-duplicated by genetic similarity — near-identical genomes never leak across splits.
+       <b>It learns resistance, not look-alikes.</b></p>
+  </div>
+</section>
+
+<section class="statement">
+  <div class="wrap">
+    <div class="kick"><span class="num-tag">03</span>&nbsp;&nbsp;Decision Report</div>
+    <h2 class="giant">We say<br><span class="out">no-call</span><br><b>on purpose.</b></h2>
+    <p>Every drug gets a verdict, a calibrated confidence, and an evidence category —
+       known marker, statistical association, or no signal. Forcing yes/no creates false confidence.
+       <b>Weak evidence returns a no-call. That is a strength.</b></p>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="n">4.7<b>M</b></div>
+    <div class="k">AMR-associated deaths / year</div>
+    <p>over one million deaths each year directly attributable.</p></div>
+  <div class="stat"><div class="n">72<b>h</b></div>
+    <div class="k">Standard lab turnaround</div>
+    <p>days of best-guess treatment the genome could have informed.</p></div>
+  <div class="stat"><div class="n"><b>3</b></div>
+    <div class="k">Verdicts — never decisions</div>
+    <p>fail · work · no-call — uncertainty surfaced, never hidden.</p></div>
+</div>
+
+<section class="report" id="report">
+  <div class="wrap">
+    <div class="kick">Sample report — sample_042.fasta · E. coli</div>
+    <div class="rrow head"><span>Antibiotic</span><span>Verdict</span><span>Conf</span><span>Evidence</span></div>
+    <div class="rrow"><span class="drug">Ciprofloxacin</span><span class="v v-fail">[ FAIL ]</span><span class="conf">0.91</span><span class="evi">known mutation — gyrA S83L</span></div>
+    <div class="rrow"><span class="drug">Ceftriaxone</span><span class="v v-fail">[ FAIL ]</span><span class="conf">0.84</span><span class="evi">known gene — blaCTX-M-15</span></div>
+    <div class="rrow"><span class="drug">Meropenem</span><span class="v v-work">[ WORK ]</span><span class="conf">0.88</span><span class="evi">no resistance markers · target present</span></div>
+    <div class="rrow"><span class="drug">Gentamicin</span><span class="v v-nocall">[ NO-CALL ]</span><span class="conf">—</span><span class="evi">genome unlike training data</span></div>
+    <p class="banner"><b>Decision support — not a decision.</b> Every prediction must be confirmed
+       by standard laboratory testing before any clinical use.</p>
+  </div>
+</section>
+
+<footer id="safety">
+  <div class="wrap">
+    <div class="water">FIREWALL</div>
+    <div class="row">
+      <p>// research prototype — predictions from historical genome data do not prove clinical
+         safety or accuracy. genome firewall never approves, denies, scores, or ranks treatments,
+         and never generates or modifies organisms. strictly defensive, by construction.</p>
+      <span>Hack-Nation · Challenge 06</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// duplicate ticker content for seamless loop
+(() => {
+  const t = document.getElementById('tick');
+  t.innerHTML += t.innerHTML;
+})();
+</script>
+</body>
+</html>

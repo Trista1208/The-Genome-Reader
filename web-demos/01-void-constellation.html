@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — A · Void Constellation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&display=swap');
+:root{
+  --void:#000000; --white:#ffffff; --ash:#9a9a9a; --silver:#bdbdbd;
+  --iris:#8052ff; --spark:#ffb829; --verdant:#15846e;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--white);
+  font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--iris);color:#fff}
+
+/* ---------- nav ---------- */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:24px 48px}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff}
+.logo svg{display:block}
+.logo span{font-size:14px;font-weight:600;letter-spacing:.35px;text-transform:uppercase}
+.nav-links{display:flex;gap:36px;align-items:center}
+.nav-links a{color:var(--ash);text-decoration:none;font-size:14px;font-weight:600;
+  letter-spacing:.35px;text-transform:uppercase;transition:color .25s}
+.nav-links a:hover{color:#fff}
+.btn{display:inline-block;background:var(--iris);color:#fff;text-decoration:none;
+  font-size:14px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;
+  padding:14.4px 24px;border-radius:22.5px;border:0;cursor:pointer;
+  transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(128,82,255,.45)}
+.btn.big{padding:18px 32px}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;
+  align-items:center;max-width:1400px;margin:0 auto;padding:120px 48px 60px;gap:24px}
+.kicker{font-size:14px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;
+  color:var(--spark);margin-bottom:30px}
+h1{font-size:clamp(52px,6.2vw,96px);line-height:1.02;font-weight:400;
+  letter-spacing:-.04em;margin-bottom:36px}
+h1 .iris{color:var(--iris)}
+.lede{font-size:18px;font-weight:200;line-height:1.6;color:var(--white);
+  max-width:480px;margin-bottom:44px}
+.lede b{font-weight:400;color:var(--spark)}
+.hero-cta{display:flex;gap:28px;align-items:center}
+.ghost{color:var(--ash);font-size:14px;letter-spacing:.35px;text-transform:uppercase;
+  text-decoration:none;border-bottom:1px solid rgba(154,154,154,.35);padding-bottom:4px;
+  transition:color .25s,border-color .25s}
+.ghost:hover{color:#fff;border-color:#fff}
+#helix{width:100%;height:78vh;display:block}
+
+/* ---------- stats ---------- */
+.stats{max-width:1400px;margin:0 auto;padding:60px 48px 120px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+.stat .num{font-size:clamp(48px,4.5vw,78px);font-weight:400;letter-spacing:-3.12px;line-height:1}
+.stat .num em{font-style:normal;color:var(--iris)}
+.stat .lbl{margin-top:14px;font-size:14px;font-weight:600;letter-spacing:.35px;
+  text-transform:uppercase;color:var(--ash)}
+.stat p{margin-top:10px;font-size:15px;font-weight:200;color:var(--silver);max-width:300px}
+
+/* ---------- modules ---------- */
+section{max-width:1400px;margin:0 auto;padding:60px 48px}
+.sec-head{margin-bottom:80px;max-width:720px}
+h2{font-size:clamp(36px,3.4vw,56px);font-weight:400;letter-spacing:-1.68px;line-height:1.08}
+.sec-head p{margin-top:22px;font-size:18px;font-weight:200;color:var(--silver);line-height:1.6}
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:60px}
+.mod .idx{font-size:14px;font-weight:600;letter-spacing:.35px;color:var(--spark);
+  text-transform:uppercase;margin-bottom:18px}
+.mod h3{font-size:27px;font-weight:400;letter-spacing:-.48px;margin-bottom:16px}
+.mod p{font-size:15px;font-weight:200;line-height:1.6;color:var(--silver)}
+
+/* ---------- report ---------- */
+.report{padding-bottom:140px}
+.rrow{display:grid;grid-template-columns:1.2fr 1fr .8fr 1.6fr;gap:24px;
+  padding:26px 0;border-bottom:1px solid rgba(255,255,255,.08);align-items:baseline}
+.rrow.head{border-bottom:1px solid rgba(255,255,255,.18)}
+.rrow.head span{font-size:12px;font-weight:600;letter-spacing:.35px;
+  text-transform:uppercase;color:var(--ash)}
+.drug{font-size:24px;font-weight:400;letter-spacing:-.48px}
+.verdict{font-size:14px;font-weight:600;letter-spacing:.35px;text-transform:uppercase}
+.v-fail{color:var(--spark)} .v-work{color:var(--iris)} .v-nocall{color:var(--ash)}
+.conf{font-size:24px;font-weight:200}
+.evi{font-size:15px;font-weight:200;color:var(--silver)}
+.banner{margin-top:36px;font-size:15px;font-weight:200;color:var(--silver)}
+.banner b{color:var(--spark);font-weight:400}
+
+footer{border-top:1px solid rgba(255,255,255,.08);padding:48px;
+  display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
+footer p{font-size:12px;color:var(--ash);font-weight:200;max-width:640px;line-height:1.6}
+footer span{font-size:12px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;color:var(--ash)}
+
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;padding-top:140px}
+  #helix{height:46vh}
+  .stats,.mods{grid-template-columns:1fr}
+  .rrow{grid-template-columns:1fr 1fr;row-gap:8px}
+  .nav-links a:not(.btn){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 1 L21 20 L1 20 Z" fill="none" stroke="#8052ff" stroke-width="2"/></svg>
+    <span>Genome Firewall</span>
+  </a>
+  <div class="nav-links">
+    <a href="#system">System</a><a href="#report">Report</a><a href="#safety">Safety</a>
+    <a class="btn" href="#report">Run a Genome</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div>
+    <div class="kicker">AI Defense Against Superbugs</div>
+    <h1>The genome<br>already knows.<br><span class="iris">We read it first.</span></h1>
+    <p class="lede">Genome Firewall predicts which antibiotics are <b>likely to fail</b> — from one
+      reconstructed bacterial genome — days before standard lab results arrive.
+      Calibrated confidence. An honest no-call when the evidence is thin.
+      <b>Never</b> a treatment decision.</p>
+    <div class="hero-cta">
+      <a class="btn big" href="#report">Analyze a Genome</a>
+      <a class="ghost" href="#system">How it works</a>
+    </div>
+  </div>
+  <canvas id="helix"></canvas>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="num">4.7<em>M</em></div>
+    <div class="lbl">Deaths associated with AMR / year</div>
+    <p>Resistance is already here. Over one million deaths each year are directly attributable.</p></div>
+  <div class="stat"><div class="num">72<em>h</em></div>
+    <div class="lbl">Standard lab turnaround</div>
+    <p>One to three days of best-guess treatment. Every wrong hour feeds the superbug.</p></div>
+  <div class="stat"><div class="num"><em>3</em></div>
+    <div class="lbl">Verdicts — never a decision</div>
+    <p>Likely to fail. Likely to work. No-call. Uncertainty is reported, never hidden.</p></div>
+</div>
+
+<section id="system">
+  <div class="sec-head">
+    <div class="kicker">The System</div>
+    <h2>Three modules.<br>One defensive layer.</h2>
+    <p>Strictly protective by construction — it predicts and explains resistance that already
+       exists. It never designs, modifies, or suggests changes to an organism.</p>
+  </div>
+  <div class="mods">
+    <div class="mod"><div class="idx">01 — Genome Reader</div><h3>From DNA to features</h3>
+      <p>A reconstructed FASTA genome is annotated with NCBI AMRFinderPlus, mapping known
+         resistance genes and point mutations into a repeatable, documented feature space.</p></div>
+    <div class="mod"><div class="idx">02 — Predictor</div><h3>Will each antibiotic work?</h3>
+      <p>One calibrated model per antibiotic, trained on laboratory-measured outcomes only —
+         de-duplicated by genetic similarity so it learns resistance, not look-alikes.</p></div>
+    <div class="mod"><div class="idx">03 — Decision Report</div><h3>Know when not to predict</h3>
+      <p>Every drug gets a verdict, a calibrated confidence, and its evidence category.
+         Weak or unfamiliar evidence returns a no-call — a strength, not a failure.</p></div>
+  </div>
+</section>
+
+<section class="report" id="report">
+  <div class="sec-head">
+    <div class="kicker">Sample Report</div>
+    <h2>sample_042.fasta — <span style="color:var(--iris)">E. coli</span></h2>
+  </div>
+  <div class="rrow head"><span>Antibiotic</span><span>Verdict</span><span>Confidence</span><span>Evidence</span></div>
+  <div class="rrow"><span class="drug">Ciprofloxacin</span><span class="verdict v-fail">Likely to fail</span><span class="conf">0.91</span><span class="evi">Known mutation — gyrA S83L</span></div>
+  <div class="rrow"><span class="drug">Ceftriaxone</span><span class="verdict v-fail">Likely to fail</span><span class="conf">0.84</span><span class="evi">Known gene — blaCTX-M-15</span></div>
+  <div class="rrow"><span class="drug">Meropenem</span><span class="verdict v-work">Likely to work</span><span class="conf">0.88</span><span class="evi">No resistance markers; target present</span></div>
+  <div class="rrow"><span class="drug">Gentamicin</span><span class="verdict v-nocall">No-call</span><span class="conf">—</span><span class="evi">Genome unlike training data</span></div>
+  <p class="banner"><b>Every result is decision support, not a decision.</b> All predictions must be
+     confirmed by standard laboratory testing before any clinical use.</p>
+</section>
+
+<footer id="safety">
+  <p>Research prototype. Predictions from historical genome data do not prove clinical safety or
+     accuracy. Genome Firewall never approves, denies, scores, or ranks treatments — and never
+     generates or modifies organisms. Defensive by design.</p>
+  <span>Hack-Nation · Challenge 06</span>
+</footer>
+
+<script>
+(() => {
+  const cv = document.getElementById('helix'), ctx = cv.getContext('2d');
+  const COLORS = ['#8052ff','#ffb829','#15846e','#c084fc','#5aa9ff','#ff6ad5'];
+  let W, H, dpr, mx = 0, my = 0;
+  function resize(){
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize(); addEventListener('resize', resize);
+  addEventListener('mousemove', e => {
+    mx = (e.clientX / innerWidth - .5) * .6;
+    my = (e.clientY / innerHeight - .5) * .3;
+  });
+
+  // DNA double helix: two strands + rungs, plus ambient dust
+  const P = [];
+  const TURNS = 3.4, STEPS = 46;
+  for (let i = 0; i < STEPS; i++){
+    const t = i / (STEPS - 1) * Math.PI * 2 * TURNS;
+    for (const off of [0, Math.PI])
+      P.push({ t: t + off, y: i / (STEPS - 1), rung: false,
+        c: COLORS[(i + (off ? 3 : 0)) % COLORS.length], s: 2.6 + Math.random() * 1.6,
+        ph: Math.random() * 6.28 });
+    if (i % 4 === 0)
+      for (let k = 1; k < 4; k++)
+        P.push({ t, y: i / (STEPS - 1), rung: k / 4,
+          c: COLORS[i % COLORS.length], s: 1.6 + Math.random(), ph: Math.random() * 6.28 });
+  }
+  for (let i = 0; i < 90; i++)
+    P.push({ dust: true, x: Math.random() * 2 - 1, y: Math.random(),
+      z: Math.random() * 2 - 1, c: COLORS[i % COLORS.length],
+      s: 1 + Math.random() * 1.4, ph: Math.random() * 6.28 });
+
+  function tri(x, y, s, rot, color, a){
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.globalAlpha = a; ctx.strokeStyle = color; ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(0, -s); ctx.lineTo(s * .9, s * .7); ctx.lineTo(-s * .9, s * .7);
+    ctx.closePath(); ctx.stroke(); ctx.restore();
+  }
+
+  let rot = 0;
+  function frame(){
+    rot += 0.0035;
+    ctx.clearRect(0, 0, W, H);
+    const cx = W / 2, R = Math.min(W, H) * .24, hh = H * .86, top = H * .07;
+    const f = 900, tilt = my, spin = rot + mx * 2;
+
+    for (const p of P){
+      let x, y, z;
+      if (p.dust){
+        x = p.x * W * .48; z = p.z * R; y = top + p.y * hh;
+        x += Math.sin(rot * 2 + p.ph) * 8;
+        const sc = f / (f + z * 2);
+        tri(cx + x * sc, y + Math.cos(rot + p.ph) * 6, p.s * sc,
+          p.ph + rot * 3, p.c, .14 + .1 * Math.sin(rot * 4 + p.ph));
+        continue;
+      }
+      let a = p.t + spin;
+      if (p.rung){ // interpolate between strands
+        const a2 = p.t + Math.PI + spin;
+        x = Math.cos(a) * R + (Math.cos(a2) * R - Math.cos(a) * R) * p.rung;
+        z = Math.sin(a) * R + (Math.sin(a2) * R - Math.sin(a) * R) * p.rung;
+      } else {
+        x = Math.cos(a) * R; z = Math.sin(a) * R;
+      }
+      y = top + p.y * hh + Math.sin(rot * 2 + p.ph) * 2;
+      const yy = y + z * tilt * .4;
+      const sc = f / (f + z + 320);
+      const depth = .35 + .65 * (1 - (z / R + 1) / 2);
+      tri(cx + x * sc, yy, p.s * sc * 2, a + rot * 2 + p.ph, p.c, .25 + depth * .65);
+    }
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+# Antibiotic name normalization for BV-BRC AST labels.
+#
+# Matching is done after normalizing the raw bucket (lowercase, strip,
+# collapse whitespace, remove mojibake like trailing 'Â').
+#
+# synonyms: raw bucket (after that normalization) -> canonical name.
+#   Only unambiguous mappings are listed (clear misspellings / known aliases).
+# known_canonical: canonical names accepted as-is (raw bucket == canonical).
+# Anything not matching either list is UNTRUSTED: excluded from the clean
+# labels and listed in the audit report (class-level buckets, garbage, and
+# ambiguous variants we refuse to guess about).
+
+synonyms:
+  # clear misspellings seen in the dumps
+  tigecyklin: tigecycline
+  tetracyklin: tetracycline
+  trimotheprim: trimethoprim
+  # spelling / alias variants of the same drug
+  amoxicillin_clavulanat: amoxicillin/clavulanic acid
+  cefpodoxime_clavulanic_acid: cefpodoxime/clavulanic acid
+  sulfamethoxazole/trimethoprim: trimethoprim/sulfamethoxazole
+  cefalexin: cephalexin          # INN vs USAN-style spelling
+  cefalotin: cephalothin         # INN vs USAN-style spelling
+  cefpirom: cefpirome
+
+known_canonical:
+  # E. coli core set (breakpoint placeholders exist for the first five)
+  - ciprofloxacin
+  - gentamicin
+  - ampicillin
+  - trimethoprim/sulfamethoxazole
+  - cefotaxime
+  # aminoglycosides
+  - amikacin
+  - tobramycin
+  - kanamycin
+  - neomycin
+  - netilmicin
+  - streptomycin
+  - spectinomycin
+  - apramycin
+  # beta-lactams
+  - amoxicillin
+  - amoxicillin/clavulanic acid
+  - ampicillin/sulbactam
+  - carbenicillin
+  - piperacillin
+  - piperacillin/tazobactam
+  - ticarcillin
+  - ticarcillin/clavulanic acid
+  - temocillin
+  - penicillin
+  - cephalexin
+  - cephalothin
+  - cefazolin
+  - cefoxitin
+  - cefotetan
+  - cefmetazole
+  - cefuroxime
+  - cefpodoxime
+  - cefpodoxime/clavulanic acid
+  - ceftibuten
+  - cefixime
+  - ceftriaxone
+  - ceftazidime
+  - ceftazidime/avibactam
+  - ceftazidime/clavulanic acid
+  - cefotaxime/clavulanic acid
+  - cefepime
+  - cefepime_taniborbactam
+  - cefpirome
+  - cefoperazone
+  - cefoperazone/sulbactam
+  - cefozopran
+  - ceftaroline
+  - ceftobiprole
+  - ceftolozane/tazobactam
+  - cefiderocol
+  - ceftiofur
+  - cefquinome
+  - aztreonam
+  - ertapenem
+  - imipenem
+  - imipenem/relebactam
+  - meropenem
+  - doripenem
+  - sulbactam
+  # fluoroquinolones
+  - nalidixic acid
+  - norfloxacin
+  - ofloxacin
+  - levofloxacin
+  - moxifloxacin
+  - delafloxacin
+  - gemifloxacin
+  # polymyxins
+  - colistin
+  - polymyxin B
+  # tetracyclines
+  - tetracycline
+  - doxycycline
+  - minocycline
+  - oxytetracycline
+  - tigecycline
+  # macrolides / lincosamides
+  - azithromycin
+  - erythromycin
+  - clarithromycin
+  - clindamycin
+  - spiramycin
+  - lincomycin
+  # others
+  - chloramphenicol
+  - florfenicol
+  - fosfomycin
+  - nitrofurantoin
+  - trimethoprim
+  - sulfamethoxazole
+  - sulfisoxazole
+  - rifampin
+  - rifaximin
+  - daptomycin
+  - linezolid
+  - metronidazole
+  - teicoplanin
+  - vancomycin

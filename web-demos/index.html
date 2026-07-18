@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — Design Explorations</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;color:#fff;font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:80px 24px;-webkit-font-smoothing:antialiased}
+h1{font-size:clamp(32px,4vw,56px);font-weight:400;letter-spacing:-.03em;margin-bottom:14px;text-align:center}
+p.sub{color:#9a9a9a;font-weight:200;font-size:16px;margin-bottom:64px;text-align:center;max-width:560px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(240px,1fr));gap:24px;width:100%;max-width:1100px}
+a.card{display:block;text-decoration:none;border:1px solid rgba(255,255,255,.1);border-radius:16px;
+  overflow:hidden;transition:transform .25s,border-color .25s;color:#fff}
+a.card:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.3)}
+.preview{height:150px;position:relative}
+.pv-a{background:radial-gradient(circle at 60% 40%,rgba(128,82,255,.5),transparent 60%),
+  radial-gradient(circle at 30% 70%,rgba(255,184,41,.28),transparent 55%),#000}
+.pv-b{background:radial-gradient(circle at 50% 45%,rgba(57,184,172,.55),transparent 60%),
+  radial-gradient(circle at 70% 60%,rgba(253,233,255,.22),transparent 55%),#012624}
+.pv-c{background:linear-gradient(90deg,transparent 55%,rgba(128,82,255,.4) 57%,transparent 59%),
+  repeating-linear-gradient(0deg,rgba(57,213,176,.08) 0 1px,transparent 1px 24px),
+  repeating-linear-gradient(90deg,rgba(57,213,176,.08) 0 1px,transparent 1px 24px),#05080a}
+.pv-d{background:linear-gradient(90deg,rgba(128,82,255,.5) 28%,transparent 32%),
+  radial-gradient(circle at 72% 45%,rgba(57,213,176,.4),transparent 55%),
+  radial-gradient(circle at 45% 70%,rgba(253,233,255,.18),transparent 50%),
+  radial-gradient(circle at 80% 20%,rgba(255,184,41,.22),transparent 45%),#000}
+.pv-g{background:
+  repeating-linear-gradient(0deg,rgba(247,245,242,.05) 0 1px,transparent 1px 16px),
+  repeating-linear-gradient(90deg,rgba(247,245,242,.05) 0 1px,transparent 1px 13px),
+  radial-gradient(circle at 68% 45%,rgba(220,38,38,.30),transparent 55%),#14110f}
+.pv-f{background:
+  linear-gradient(180deg,transparent 30%,rgba(213,224,255,.14) 48%,transparent 52%),
+  linear-gradient(180deg,transparent 55%,rgba(213,224,255,.09) 72%,transparent 76%),
+  radial-gradient(circle at 80% 10%,rgba(5,34,97,.9),transparent 60%),#020a19}
+.pv-h{background:
+  linear-gradient(90deg,transparent 44%,rgba(220,38,38,.38) 50%,transparent 56%),
+  radial-gradient(circle at 70% 40%,rgba(247,245,242,.14),transparent 55%),
+  radial-gradient(circle at 30% 70%,rgba(220,38,38,.16),transparent 50%),#14110f}
+.pv-i{background:
+  radial-gradient(circle at 50% 50%,rgba(220,38,38,.35),transparent 40%),
+  radial-gradient(circle at 50% 50%,transparent 55%,rgba(20,17,15,.9) 100%),
+  repeating-radial-gradient(circle at 50% 50%,rgba(247,245,242,.08) 0 1px,transparent 1px 14px),#14110f}
+.pv-j{background:
+  linear-gradient(90deg,rgba(220,38,38,.5) 30%,rgba(20,17,15,.2) 50%,rgba(220,38,38,.5) 70%),
+  radial-gradient(circle at 50% 50%,rgba(255,120,100,.3),transparent 45%),#14110f}
+.pv-k{background:
+  radial-gradient(circle at 50% 50%,rgba(220,38,38,.55),transparent 28%),
+  radial-gradient(circle at 50% 50%,rgba(247,245,242,.15),transparent 45%),
+  repeating-radial-gradient(circle at 50% 50%,rgba(220,38,38,.14) 0 1px,transparent 1px 18px),#14110f}
+.pv-l{background:
+  repeating-linear-gradient(0deg,rgba(220,38,38,.14) 0 1px,transparent 1px 16px),
+  repeating-linear-gradient(90deg,rgba(247,245,242,.09) 0 1px,transparent 1px 16px),
+  radial-gradient(circle at 50% 50%,rgba(220,38,38,.18),transparent 50%),#14110f}
+.body{padding:22px}
+.tag{font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#9a9a9a;margin-bottom:10px}
+h2{font-size:20px;font-weight:500;letter-spacing:-.02em;margin-bottom:8px}
+.desc{font-size:13px;color:#9a9a9a;font-weight:400;line-height:1.5}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>Genome Firewall — design explorations</h1>
+<p class="sub">Three directions for the demo site. Same content, different souls.
+   Click through, view them full-screen, and pick a spine to refine.</p>
+<div class="grid">
+  <a class="card" href="01-void-constellation.html">
+    <div class="preview pv-a"></div>
+    <div class="body"><div class="tag">A — Dala-inspired</div>
+      <h2>Void Constellation</h2>
+      <p class="desc">Pure black, electric-iris violet, amber sparks. Triangle particles form a
+         rotating DNA helix — knowledge as a constellation. Sculptural 96px headlines, weight-200 body.</p></div>
+  </a>
+  <a class="card" href="02-abyssal-orb.html">
+    <div class="preview pv-b"></div>
+    <div class="body"><div class="tag">B — Auros-inspired</div>
+      <h2>Abyssal Orb</h2>
+      <p class="desc">Deep-teal terminal water, a bioluminescent particle sphere, aurora-gradient CTA,
+         phosphor-pink statistics. Instrument-panel calm with cinematic depth.</p></div>
+  </a>
+  <a class="card" href="03-firewall-terminal.html">
+    <div class="preview pv-c"></div>
+    <div class="body"><div class="tag">C — Original direction</div>
+      <h2>Biosecurity Terminal</h2>
+      <p class="desc">The firewall made literal: a live ACGT sequence stream hits a violet gate —
+         resistance markers burn out, clean bases pass. Monospace, scanlines, terminal modules.</p></div>
+  </a>
+  <a class="card" href="04-merged.html">
+    <div class="preview pv-d"></div>
+    <div class="body"><div class="tag">D — Merged</div>
+      <h2>The Full Stack</h2>
+      <p class="desc">All three fused: Dala's void + triangle helix emits an ACGT stream that flows
+         through the violet gate, over Auros bioluminescent dust. Aurora CTA, phosphor stats.</p></div>
+  </a>
+  <a class="card" href="07-hud-monument.html">
+    <div class="preview pv-g"></div>
+    <div class="body"><div class="tag">G — Hubtown × 0sec</div>
+      <h2>HUD Monument</h2>
+      <p class="desc">Hubtown's colossal Grotesk on 0sec's warm charcoal: ASCII shader field renders
+         the helix as a density ramp, red = FAIL only, VT323 readouts, HUD corner brackets.</p></div>
+  </a>
+  <a class="card" href="06-monument.html">
+    <div class="preview pv-f"></div>
+    <div class="body"><div class="tag">F — Hubtown-inspired</div>
+      <h2>Monument</h2>
+      <p class="desc">Colossal stacked statements on midnight navy #020a19, ice-blue type at 170px,
+         weight-contrast headlines, an ACGT marquee ticker, verdicts told by weight not color.</p></div>
+  </a>
+  <a class="card" href="08-blackwall.html">
+    <div class="preview pv-h"></div>
+    <div class="body"><div class="tag">H — Dala × 0sec</div>
+      <h2>Blackwall</h2>
+      <p class="desc">Dala's particle constellation living a full story: DNA helix → neural net →
+         glitching crimson firewall slab. Warm charcoal, paper, signal red. Cyberpunk-grade.</p></div>
+  </a>
+  <a class="card" href="09-immersive.html">
+    <div class="preview pv-i"></div>
+    <div class="body"><div class="tag">I — Igloo-grade</div>
+      <h2>Immersive World</h2>
+      <p class="desc">Locked viewport, first-person travel: fly through the DNA helix tunnel, cross
+         the neural lattice, arrive at the Blackwall. Real WebGL (Three.js), story beats, report at the end.</p></div>
+  </a>
+  <a class="card" href="10-immersive-blackwall.html">
+    <div class="preview pv-j"></div>
+    <div class="body"><div class="tag">J — Immersive v2</div>
+      <h2>Blackwall Gate</h2>
+      <p class="desc">Solid-ribbon DNA that unravels into the lattice; the epic Blackwall monolith
+         splits open as you arrive — you glide into the calm chamber where the report lives.</p></div>
+  </a>
+  <a class="card" href="11-immersive-core.html">
+    <div class="preview pv-k"></div>
+    <div class="body"><div class="tag">K — Immersive v2</div>
+      <h2>Central Core</h2>
+      <p class="desc">Same journey, different god: a pulsing wireframe heart with orbit rings and a
+         point shell that expands around you as you fly into it. Report waits inside.</p></div>
+  </a>
+  <a class="card" href="12-wireframe.html">
+    <div class="preview pv-l"></div>
+    <div class="body"><div class="tag">L — Strict wireframe</div>
+      <h2>Wireframe Weave</h2>
+      <p class="desc">Lines only — no particles, no sprites, no glitch. Wireframe DNA with hoops and
+         rungs, and a spaceship camera that weaves around the bridges with gentle banking.</p></div>
+  </a>
+</div>
+</body>
+</html>

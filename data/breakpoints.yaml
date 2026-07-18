@@ -1,0 +1,45 @@
+# MIC breakpoints used to re-derive S/R calls from raw measurements.
+#
+# Semantics (EUCAST convention): S if MIC <= s_max_mg_l, R if MIC > r_min_mg_l.
+# Values in mg/L.
+#
+# !!! NONE OF THE NUMBERS BELOW ARE FILLED IN !!!
+# Every entry is a placeholder with value null. clean_labels.py SKIPS any
+# drug whose breakpoint is null — it never guesses. Fill from the CURRENT
+# EUCAST breakpoint table (https://www.eucast.org/clinical_breakpoints)
+# before relying on re-derived calls.
+#
+# One standard per species is the design goal (CONTRACT: one final call);
+# 'standard'/'standard_year' record which table the numbers came from.
+
+ecoli:
+  ciprofloxacin:
+    standard: EUCAST
+    standard_year: null       # TODO: fill from current EUCAST table
+    s_max_mg_l: null          # TODO: fill from current EUCAST table
+    r_min_mg_l: null          # TODO: fill from current EUCAST table
+  gentamicin:
+    standard: EUCAST
+    standard_year: null       # TODO: fill from current EUCAST table
+    s_max_mg_l: null          # TODO: fill from current EUCAST table
+    r_min_mg_l: null          # TODO: fill from current EUCAST table
+  ampicillin:
+    standard: EUCAST
+    standard_year: null       # TODO: fill from current EUCAST table
+    s_max_mg_l: null          # TODO: fill from current EUCAST table
+    r_min_mg_l: null          # TODO: fill from current EUCAST table
+  trimethoprim/sulfamethoxazole:
+    standard: EUCAST
+    standard_year: null       # TODO: fill from current EUCAST table
+    s_max_mg_l: null          # TODO: fill from current EUCAST table (trimethoprim component)
+    r_min_mg_l: null          # TODO: fill from current EUCAST table (trimethoprim component)
+  cefotaxime:
+    standard: EUCAST
+    standard_year: null       # TODO: fill from current EUCAST table
+    s_max_mg_l: null          # TODO: fill from current EUCAST table
+    r_min_mg_l: null          # TODO: fill from current EUCAST table
+
+# No breakpoint entries yet for these species: every MIC-parseable drug is
+# skipped and listed in the audit. Add placeholders here when needed.
+kpneumoniae: {}
+ngonorrhoeae: {}

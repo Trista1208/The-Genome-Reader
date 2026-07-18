@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — H · Blackwall</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --char:#14110f; --paper:#f7f5f2; --ash:#9a938c; --silver:#c9c2ba;
+  --red:#dc2626; --red-dim:rgba(220,38,38,.5);
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--char);color:var(--paper);
+  font-family:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  font-weight:400;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:var(--red);color:var(--paper)}
+
+/* ---------- nav ---------- */
+nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;
+  justify-content:space-between;padding:24px 48px;
+  background:linear-gradient(rgba(20,17,15,.8),transparent)}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--paper);
+  font-size:14px;font-weight:600;letter-spacing:.35px;text-transform:uppercase}
+.nav-links{display:flex;gap:36px;align-items:center}
+.nav-links a{color:var(--ash);text-decoration:none;font-size:13px;font-weight:600;
+  letter-spacing:.35px;text-transform:uppercase;transition:color .25s}
+.nav-links a:hover{color:var(--paper)}
+.btn{display:inline-block;background:var(--red);color:var(--paper);text-decoration:none;
+  font-size:13px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;
+  padding:14px 24px;border-radius:22.5px;border:0;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(220,38,38,.4)}
+.btn.big{padding:18px 32px}
+
+/* ---------- hero ---------- */
+.hero{min-height:100vh;display:grid;grid-template-columns:1.02fr .98fr;align-items:center;
+  max-width:1500px;margin:0 auto;padding:130px 48px 70px;gap:24px}
+.kicker{font-size:13px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;
+  color:var(--red);margin-bottom:30px}
+h1{font-size:clamp(50px,5.8vw,92px);line-height:1.02;font-weight:400;
+  letter-spacing:-.04em;margin-bottom:38px}
+h1 .r{color:var(--red)}
+.lede{font-size:18px;font-weight:200;line-height:1.65;color:var(--paper);
+  max-width:480px;margin-bottom:44px}
+.lede b{font-weight:400;color:var(--red)}
+.hero-cta{display:flex;gap:28px;align-items:center}
+.ghost{color:var(--ash);font-size:13px;font-weight:500;letter-spacing:.35px;text-transform:uppercase;
+  text-decoration:none;border-bottom:1px solid rgba(154,147,140,.35);padding-bottom:4px;transition:.25s}
+.ghost:hover{color:var(--paper);border-color:var(--paper)}
+.stage{position:relative;height:82vh}
+#wall{width:100%;height:100%;display:block;cursor:crosshair}
+.form-tag{position:absolute;bottom:6px;right:6px;font-family:var(--mono);
+  font-size:11px;letter-spacing:.2em;color:var(--ash);text-transform:uppercase;pointer-events:none}
+.form-tag b{color:var(--red);font-weight:500}
+
+/* ---------- stats ---------- */
+.stats{max-width:1500px;margin:0 auto;padding:70px 48px 120px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+.stat .num{font-size:clamp(48px,4.6vw,80px);font-weight:400;letter-spacing:-3.2px;line-height:1}
+.stat .num em{font-style:normal;color:var(--red)}
+.stat .lbl{margin-top:14px;font-size:12px;font-weight:600;letter-spacing:.35px;
+  text-transform:uppercase;color:var(--ash)}
+.stat p{margin-top:10px;font-size:15px;font-weight:200;color:var(--silver);max-width:300px;line-height:1.6}
+
+/* ---------- modules ---------- */
+section{max-width:1500px;margin:0 auto;padding:60px 48px}
+.sec-head{margin-bottom:80px;max-width:740px}
+h2{font-size:clamp(36px,3.4vw,58px);font-weight:400;letter-spacing:-1.7px;line-height:1.06}
+.sec-head p{margin-top:22px;font-size:18px;font-weight:200;color:var(--silver);line-height:1.65}
+.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:60px}
+.mod .idx{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--red);
+  text-transform:uppercase;margin-bottom:18px}
+.mod h3{font-size:27px;font-weight:400;letter-spacing:-.5px;margin-bottom:16px}
+.mod p{font-size:15px;font-weight:200;line-height:1.65;color:var(--silver)}
+
+/* ---------- report ---------- */
+.report{padding-bottom:140px}
+.rrow{display:grid;grid-template-columns:1.2fr 1fr .8fr 1.6fr;gap:24px;
+  padding:26px 0;border-bottom:1px solid rgba(247,245,242,.08);align-items:baseline}
+.rrow.head{border-bottom:1px solid rgba(247,245,242,.2)}
+.rrow.head span{font-size:11px;font-weight:600;letter-spacing:.35px;
+  text-transform:uppercase;color:var(--ash)}
+.drug{font-size:24px;font-weight:400;letter-spacing:-.5px}
+.verdict{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.2em;text-transform:uppercase}
+.v-fail{color:var(--red)} .v-work{color:var(--paper)} .v-nocall{color:var(--ash)}
+.conf{font-size:24px;font-weight:200}
+.evi{font-size:15px;font-weight:200;color:var(--silver)}
+.banner{margin-top:36px;font-size:15px;font-weight:200;color:var(--silver);line-height:1.7}
+.banner b{color:var(--red);font-weight:400}
+
+/* ---------- footer ---------- */
+footer{position:relative;border-top:1px solid rgba(247,245,242,.08);
+  padding:110px 48px 60px;text-align:center;overflow:hidden}
+footer::before{content:"";position:absolute;inset:auto -20% -70% -20%;height:140%;
+  background:radial-gradient(ellipse at 50% 100%,rgba(220,38,38,.22),transparent 60%);pointer-events:none}
+footer .big{font-size:clamp(40px,4.8vw,78px);font-weight:400;letter-spacing:-.04em;
+  line-height:1.02;margin-bottom:40px;position:relative}
+footer .big .r{color:var(--red)}
+footer p{position:relative;font-size:13px;font-weight:200;color:var(--ash);
+  max-width:660px;margin:52px auto 0;line-height:1.7}
+footer span{position:relative;display:block;margin-top:26px;font-family:var(--mono);
+  font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ash);opacity:.7}
+
+@media(max-width:960px){
+  .hero{grid-template-columns:1fr;padding-top:140px}
+  .stage{height:44vh}
+  .stats,.mods{grid-template-columns:1fr}
+  .rrow{grid-template-columns:1fr 1fr;row-gap:8px}
+  .nav-links a:not(.btn){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">
+    <svg width="20" height="20" viewBox="0 0 22 22"><path d="M11 1 L21 20 L1 20 Z" fill="none" stroke="#dc2626" stroke-width="2"/></svg>
+    Genome Firewall
+  </a>
+  <div class="nav-links">
+    <a href="#system">System</a><a href="#report">Report</a><a href="#safety">Safety</a>
+    <a class="btn" href="#report">Run a Genome</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div>
+    <div class="kicker">AI Defense Against Superbugs</div>
+    <h1>DNA becomes data.<br>Data becomes<br><span class="r">the wall.</span></h1>
+    <p class="lede">Genome Firewall predicts which antibiotics are <b>likely to fail</b> — from one
+      reconstructed bacterial genome — days before standard lab results arrive.
+      Calibrated confidence. An honest no-call. <b>Never</b> a treatment decision.</p>
+    <div class="hero-cta">
+      <a class="btn big" href="#report">Analyze a Genome</a>
+      <a class="ghost" href="#system">How it works</a>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="wall"></canvas>
+    <div class="form-tag">form // <b id="formName">helix</b> · scroll to morph · hover for orb</div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat"><div class="num">4.7<em>M</em></div>
+    <div class="lbl">Deaths associated with AMR / year</div>
+    <p>Over one million deaths each year are directly attributable to resistant infection.</p></div>
+  <div class="stat"><div class="num">72<em>h</em></div>
+    <div class="lbl">Standard lab turnaround</div>
+    <p>Days of best-guess treatment the genome could have informed.</p></div>
+  <div class="stat"><div class="num">3</div>
+    <div class="lbl">Verdicts — never decisions</div>
+    <p>Fail · work · no-call. Uncertainty is surfaced, never hidden.</p></div>
+</div>
+
+<section id="system">
+  <div class="sec-head">
+    <div class="kicker">The System</div>
+    <h2>Three modules.<br>One defensive layer.</h2>
+    <p>Strictly protective by construction — it predicts and explains resistance that already
+       exists. It never designs, modifies, or suggests changes to an organism.</p>
+  </div>
+  <div class="mods">
+    <div class="mod"><div class="idx">01 — Genome Reader</div><h3>From DNA to features</h3>
+      <p>A reconstructed FASTA is annotated with NCBI AMRFinderPlus, mapping known resistance
+         genes and point mutations into a repeatable, documented feature space.</p></div>
+    <div class="mod"><div class="idx">02 — Predictor</div><h3>Will each antibiotic work?</h3>
+      <p>One calibrated model per antibiotic, trained on laboratory-measured outcomes only —
+         de-duplicated by genetic similarity so it learns resistance, not look-alikes.</p></div>
+    <div class="mod"><div class="idx">03 — Decision Report</div><h3>Know when not to predict</h3>
+      <p>Every drug gets a verdict, calibrated confidence, and an evidence category.
+         Weak or unfamiliar evidence returns a no-call — a strength, not a failure.</p></div>
+  </div>
+</section>
+
+<section class="report" id="report">
+  <div class="sec-head">
+    <div class="kicker">Sample Report</div>
+    <h2>sample_042.fasta — <span style="color:var(--red)">E. coli</span></h2>
+  </div>
+  <div class="rrow head"><span>Antibiotic</span><span>Verdict</span><span>Confidence</span><span>Evidence</span></div>
+  <div class="rrow"><span class="drug">Ciprofloxacin</span><span class="verdict v-fail">[ Fail ]</span><span class="conf">0.91</span><span class="evi">Known mutation — gyrA S83L</span></div>
+  <div class="rrow"><span class="drug">Ceftriaxone</span><span class="verdict v-fail">[ Fail ]</span><span class="conf">0.84</span><span class="evi">Known gene — blaCTX-M-15</span></div>
+  <div class="rrow"><span class="drug">Meropenem</span><span class="verdict v-work">[ Work ]</span><span class="conf">0.88</span><span class="evi">No resistance markers; target present</span></div>
+  <div class="rrow"><span class="drug">Gentamicin</span><span class="verdict v-nocall">[ No-call ]</span><span class="conf">—</span><span class="evi">Genome unlike training data</span></div>
+  <p class="banner"><b>Every result is decision support, not a decision.</b> All predictions must
+     be confirmed by standard laboratory testing before any clinical use.</p>
+</section>
+
+<footer id="safety">
+  <div class="big">Strictly defensive,<br><span class="r">by construction.</span></div>
+  <a class="btn big" href="#report">Run the Demo</a>
+  <p>Research prototype. Predictions from historical genome data do not prove clinical safety or
+     accuracy. Genome Firewall never approves, denies, scores, or ranks treatments — and never
+     generates or modifies organisms.</p>
+  <span>Hack-Nation · 6th Global AI Hackathon · Challenge 06</span>
+</footer>
+
+<script>
+/* Dala-style triangle constellation, scroll-driven morph:
+   helix -> network -> blackwall mapped to page scroll.
+   Hovering the canvas dissolves the current form into an
+   Auros-style bioluminescent orb (rotating, breathing, depth-twinkle). */
+(() => {
+  const cv = document.getElementById('wall'), ctx = cv.getContext('2d');
+  let W, H, dpr, mx = 0, my = 0, hover = false, orbW = 0, pSmooth = 0;
+  function resize(){
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  resize(); addEventListener('resize', resize);
+  addEventListener('mousemove', e => {
+    mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5;
+  });
+  cv.addEventListener('mouseenter', () => hover = true);
+  cv.addEventListener('mouseleave', () => hover = false);
+
+  const N = 620;
+  const rand = (() => { let s = 42; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+
+  /* --- NET targets: 6 layers, nodes + points along edges --- */
+  const LX = [.10, .27, .44, .60, .77, .92], LN = [10, 14, 14, 11, 7, 3];
+  const nodes = [];
+  LX.forEach((fx, li) => {
+    for (let k = 0; k < LN[li]; k++){
+      const fy = LN[li] === 1 ? .5 : .16 + (k / (LN[li] - 1)) * .68;
+      nodes.push({ x: fx, y: fy, l: li });
+    }
+  });
+  const edges = [];
+  nodes.forEach(n => {
+    if (n.l >= LX.length - 1) return;
+    const next = nodes.filter(m => m.l === n.l + 1);
+    for (let k = 0; k < 3; k++) edges.push([n, next[(rand() * next.length) | 0]]);
+  });
+  const netT = [];
+  nodes.forEach(n => netT.push({ x: n.x + (rand() - .5) * .012, y: n.y + (rand() - .5) * .012 }));
+  while (netT.length < N){
+    const e = edges[(rand() * edges.length) | 0], t = rand();
+    netT.push({ x: e[0].x + (e[1].x - e[0].x) * t, y: e[0].y + (e[1].y - e[0].y) * t });
+  }
+
+  /* --- WALL targets: dense slab --- */
+  const wallT = [];
+  for (let i = 0; i < N; i++)
+    wallT.push({ x: .5 + (rand() - .5) * (.05 + rand() * .03), y: .04 + rand() * .92 });
+
+  /* --- ORB targets: fibonacci sphere (Auros behavior on hover) --- */
+  const orbT = [];
+  const GA = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < N; i++){
+    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = GA * i;
+    orbT.push({ x: Math.cos(th) * r, y, z: Math.sin(th) * r });
+  }
+
+  const P = [];
+  for (let i = 0; i < N; i++){
+    const r = rand();
+    P.push({
+      c: r < .06 ? '#dc2626' : (r < .5 ? '#f7f5f2' : (r < .8 ? '#c9c2ba' : '#8a8178')),
+      s: 1.8 + rand() * 1.8, ph: rand() * 6.28,
+      dnaA: (i / N) * Math.PI * 2 * 3.2 + (i % 2 ? Math.PI : 0),
+      dnaY: .06 + (i / N) * .88,
+      rung: i % 13 === 0
+    });
+  }
+
+  function tri(x, y, s, rot, color, a){
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    ctx.globalAlpha = a; ctx.strokeStyle = color; ctx.lineWidth = 1.1;
+    ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s * .9, s * .7); ctx.lineTo(-s * .9, s * .7);
+    ctx.closePath(); ctx.stroke(); ctx.restore();
+  }
+  const ss = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+
+  const formEl = document.getElementById('formName');
+  const t0 = performance.now();
+
+  /* scroll progress -> morph weights */
+  function morphWeights(p){
+    const wD = 1 - ss((p - .20) / .16);
+    const wW = ss((p - .52) / .22);
+    const wN = Math.max(0, 1 - wD - wW);
+    return [wD, wN, wW];
+  }
+
+  function frame(now){
+    const t = (now - t0) / 1000;
+
+    /* eased scroll progress */
+    const doc = document.documentElement;
+    const maxS = Math.max(1, doc.scrollHeight - innerHeight);
+    const pTarget = Math.min(1, Math.max(0, (scrollY || doc.scrollTop) / maxS));
+    pSmooth += (pTarget - pSmooth) * .09;
+    const [wD, wN, wW] = morphWeights(pSmooth);
+
+    /* orb blend on hover */
+    orbW += ((hover ? 1 : 0) - orbW) * .06;
+    const mW = 1 - orbW;
+
+    formEl.textContent = orbW > .5 ? 'orb'
+      : (wD > .6 ? 'helix' : (wN > .6 ? 'network' : (wW > .6 ? 'blackwall' : 'morphing')));
+
+    ctx.clearRect(0, 0, W, H);
+    const spin = t * .5 + mx * 2;
+
+    /* net edges */
+    const netA = wN * mW;
+    if (netA > .02){
+      ctx.lineWidth = 1;
+      for (const [a, b] of edges){
+        ctx.globalAlpha = netA * .10;
+        ctx.strokeStyle = '#c9c2ba';
+        ctx.beginPath(); ctx.moveTo(a.x * W, a.y * H); ctx.lineTo(b.x * W, b.y * H); ctx.stroke();
+      }
+    }
+
+    /* blackwall glow + glitch (hidden while orb) */
+    const wallA = wW * mW;
+    if (wallA > .02){
+      const g = ctx.createLinearGradient(W * .38, 0, W * .62, 0);
+      g.addColorStop(0, 'rgba(220,38,38,0)');
+      g.addColorStop(.5, 'rgba(220,38,38,' + (.14 * wallA) + ')');
+      g.addColorStop(1, 'rgba(220,38,38,0)');
+      ctx.globalAlpha = 1; ctx.fillStyle = g;
+      const jitter = (wallA > .9 && Math.random() < .04) ? (Math.random() - .5) * 14 : 0;
+      ctx.fillRect(W * .38 + jitter, 0, W * .24, H);
+      ctx.strokeStyle = '#dc2626';
+      for (let k = 0; k < 5; k++){
+        const sx = W * (.46 + k * .02 + Math.sin(t * .7 + k) * .004);
+        const sy = ((t * (60 + k * 23)) % (H + 200)) - 100;
+        ctx.globalAlpha = wallA * (.12 + .1 * Math.sin(t * 2 + k * 2));
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + 90 + k * 30); ctx.stroke();
+      }
+      if (Math.random() < .18){
+        ctx.globalAlpha = wallA * .3; ctx.fillStyle = '#dc2626';
+        const gy = Math.random() * H;
+        ctx.fillRect(W * .44 + (Math.random() - .5) * 30, gy, W * .12 * Math.random(), 1.5);
+      }
+    }
+
+    const orbRot = t * .55 + mx * 2.2;
+
+    for (let i = 0; i < N; i++){
+      const p = P[i];
+
+      /* DNA position (rotating helix, pseudo-3d) */
+      const a = p.dnaA + spin;
+      let dx, dz;
+      if (p.rung){
+        const f = (Math.sin(p.ph) * .5 + .5);
+        dx = Math.cos(a) * .20 * (1 - f) + Math.cos(a + Math.PI) * .20 * f;
+        dz = Math.sin(a) * (1 - f) + Math.sin(a + Math.PI) * f;
+      } else { dx = Math.cos(a) * .20; dz = Math.sin(a); }
+      const dnaX = .5 + dx, dnaZ = dz;
+
+      /* morph blend */
+      let bx = dnaX * wD + netT[i].x * wN + wallT[i].x * wW;
+      let by = p.dnaY * wD + netT[i].y * wN + wallT[i].y * wW;
+      bx += Math.sin(t * .8 + p.ph) * .004 + mx * .02 * (wD + wN);
+      by += Math.cos(t * .6 + p.ph) * .004 + my * .015 * (wD + wN);
+      if (wallA > .5 && Math.random() < .02) bx += (Math.random() - .5) * .01;
+
+      /* ORB position (Auros behavior) */
+      const o = orbT[i];
+      const ox1 = o.x * Math.cos(orbRot) - o.z * Math.sin(orbRot);
+      const oz1 = o.x * Math.sin(orbRot) + o.z * Math.cos(orbRot);
+      const breathe = 1 + Math.sin(t * 2 + p.ph) * .03;
+      const oX = .5 + ox1 * .34 * breathe, oY = .5 + o.y * .34 * breathe + my * .02;
+      const oDepth = (1 - (oz1 + 1) / 2);
+
+      const fx = bx * mW + oX * orbW;
+      const fy = by * mW + oY * orbW;
+
+      const depth = .5 + .5 * (dnaZ * wD * mW + oz1 * orbW);
+      const sc = (.8 + .5 * (1 - depth)) * mW + (0.7 + oDepth * .9) * orbW;
+      const glitch = wallA > .6 && Math.random() < .012;
+      const col = glitch ? '#dc2626' : p.c;
+      const aMorph = (.22 + .6 * (1 - depth * .7)) * (glitch ? 1 : .8);
+      const aOrb = .10 + oDepth * .8 * (.7 + .3 * Math.sin(t * 3 + p.ph));
+      const alpha = aMorph * mW + aOrb * orbW;
+
+      tri(fx * W, fy * H, p.s * sc, a + p.ph + t, col, alpha);
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
