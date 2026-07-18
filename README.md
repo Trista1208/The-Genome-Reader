@@ -4,6 +4,18 @@
 
 > Turn a reconstructed bacterial genome (FASTA) into features an AI model can use to predict antibiotic response — before standard lab results arrive.
 
+## Sequence visualization
+
+The repository includes a self-contained, dependency-free frontend concept in `index.html`. It is a continuous 15-second cinematic trace: an exterior orbit around a reconstructed DNA double helix, a close-up tokenization transition, an animated vector space, and a final three-dimensional neural-network fly-through.
+
+Run it locally with:
+
+```bash
+python3 -m http.server 4173
+```
+
+Then open [http://localhost:4173](http://localhost:4173). It is illustrative only and includes no model prediction or clinical decision.
+
 **Repo:** [Trista1208/The-Genome-Reader](https://github.com/Trista1208/The-Genome-Reader)
 
 ---
