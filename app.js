@@ -12,7 +12,7 @@
   const NETWORK_START = 9.15;
   const WHITE = "248,248,246";
   const DNA_SEGMENTS = 39;
-  const NETWORK_COUNTS = [48, 40, 32, 24, 18, 12, 8, 4, 1];
+  const NETWORK_COUNTS = [36, 30, 24, 18, 13, 9, 6, 3, 1];
   const requestedTime = Number(new URLSearchParams(window.location.search).get("t"));
   const isFrozenPreview = Number.isFinite(requestedTime) && window.location.search.includes("t=");
 
@@ -272,7 +272,7 @@
         const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - selector * .032);
         const activation = Math.max(baseActivation, hover);
         line(from, to, connectionAlpha * (.045 + activation * .135), .52 + activation * .48, activation > .76 ? WHITE : "124,124,122");
-        if (selector === 0 && activation > .1) {
+        if (selector === 0 && (from.nodeIndex + layerIndex) % 3 === 0 && activation > .1) {
           const travel = mod(time * 1.32 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
           const pulse = { x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) };
           const tail = { x: lerp(from.x, to.x, clamp(travel - .055)), y: lerp(from.y, to.y, clamp(travel - .055)) };
@@ -286,7 +286,8 @@
       if (layer.reveal <= .003) return;
       layer.nodes.forEach((node) => {
         const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - node.nodeIndex * .018);
-        const activation = Math.max(baseActivation, hoverActivation(node));
+        const activePath = (node.nodeIndex * 5 + layerIndex * 3) % 7 < 2;
+        const activation = Math.max(baseActivation * (activePath ? 1 : .18), hoverActivation(node));
         drawSynapseNode(node, 2.35 + activation * 1.4, layer.reveal, activation);
       });
     });
