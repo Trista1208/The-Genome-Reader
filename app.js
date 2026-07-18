@@ -16,7 +16,7 @@
   const NETWORK_START = 8.25;
   const WHITE = "248,248,246";
   const DNA_SEGMENTS = 39;
-  const NETWORK_COUNTS = [12, 10, 9, 7, 5, 1];
+  const NETWORK_COUNTS = [30, 26, 22, 18, 14, 10, 7, 4, 1];
   const requestedTime = Number(new URLSearchParams(window.location.search).get("t"));
   const isFrozenPreview = Number.isFinite(requestedTime) && window.location.search.includes("t=");
 
@@ -272,8 +272,8 @@
     const firstLayer = layers[0];
 
     inputs.forEach((input) => firstLayer.nodes.forEach((node) => {
-      const selector = (input.nodeIndex * 7 + node.nodeIndex * 5) % 11;
-      if (selector > 7) return;
+      const selector = (input.nodeIndex * 7 + node.nodeIndex * 5) % 13;
+      if (selector > 5) return;
       const hover = Math.max(hoverActivation(input), hoverActivation(node));
       const activation = Math.max(smooth(reveal * 7 - selector * .045), hover);
       line(input, node, inputReveal * firstLayer.reveal * (.045 + activation * .15), .55 + activation * .5, activation > .72 ? WHITE : "122,122,120");
@@ -285,13 +285,13 @@
       const connectionAlpha = Math.min(layer.reveal, nextLayer.reveal);
       if (connectionAlpha <= .003) continue;
       layer.nodes.forEach((from) => nextLayer.nodes.forEach((to) => {
-        const selector = (from.nodeIndex * 7 + to.nodeIndex * 11 + layerIndex * 5) % 11;
-        if (selector > 7) return;
+        const selector = (from.nodeIndex * 7 + to.nodeIndex * 11 + layerIndex * 5) % 13;
+        if (selector > 5) return;
         const hover = Math.max(hoverActivation(from), hoverActivation(to));
         const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - selector * .032);
         const activation = Math.max(baseActivation, hover);
         line(from, to, connectionAlpha * (.045 + activation * .135), .52 + activation * .48, activation > .76 ? WHITE : "124,124,122");
-        if (selector <= 1 && activation > .1) {
+        if (selector === 0 && activation > .1) {
           const travel = mod(time * .34 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
           const pulse = { x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) };
           const tail = { x: lerp(from.x, to.x, clamp(travel - .055)), y: lerp(from.y, to.y, clamp(travel - .055)) };
@@ -306,7 +306,7 @@
       layer.nodes.forEach((node) => {
         const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - node.nodeIndex * .018);
         const activation = Math.max(baseActivation, hoverActivation(node));
-        drawSynapseNode(node, 3.25 + activation * 1.65, layer.reveal, activation);
+        drawSynapseNode(node, 2.35 + activation * 1.4, layer.reveal, activation);
       });
     });
   }
