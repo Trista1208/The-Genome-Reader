@@ -3,48 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A scroll-controlled 3D journey from DNA through tokenization and a neural network." />
+    <meta name="description" content="A looping 3D animation from DNA through tokenization and a neural network." />
     <title>The Genome Reader</title>
     <link rel="stylesheet" href="site.css" />
   </head>
   <body>
-    <main class="scroll-story" id="scroll-story">
-      <section class="sticky-frame">
-        <canvas
-          id="sequence-canvas"
-          aria-label="A scroll-controlled 3D animation of realistic DNA spinning, moving left, and feeding tokens into a side-view neural network"
-        ></canvas>
-
-        <div class="scroll-cue" id="scroll-cue" aria-hidden="true">
-          <span>Scroll to explore</span>
-          <i></i>
-        </div>
-
-        <aside class="progress-rail" aria-label="Animation journey">
-          <p class="rail-heading">Journey</p>
-          <div class="rail-track" aria-hidden="true">
-            <span id="rail-fill"></span>
-          </div>
-          <div class="rail-stages">
-            <button class="rail-stage is-active" type="button" data-time="0.8" aria-current="step">
-              <span>DNA</span><i></i>
-            </button>
-            <button class="rail-stage" type="button" data-time="3.7">
-              <span>Spin</span><i></i>
-            </button>
-            <button class="rail-stage" type="button" data-time="7.4">
-              <span>Tokenize</span><i></i>
-            </button>
-            <button class="rail-stage" type="button" data-time="8.9">
-              <span>First layer</span><i></i>
-            </button>
-            <button class="rail-stage" type="button" data-time="12.2">
-              <span>Network</span><i></i>
-            </button>
-          </div>
-          <p class="rail-count"><span id="rail-current">01</span> / 05</p>
-        </aside>
-      </section>
+    <main>
+      <canvas
+        id="sequence-canvas"
+        aria-label="An animated 3D sequence of realistic DNA spinning, moving left, and feeding tokens into a compression neural network"
+      ></canvas>
     </main>
     <script src="app.js"></script>
   </body>

@@ -6,7 +6,7 @@
 
 ## Sequence visualization
 
-The repository includes a self-contained, dependency-free frontend concept in `index.html`. Scrolling scrubs through a 15-second cinematic trace: a shaded 3D DNA double helix spins, moves left, sheds base-pair tokens into the first model layer, and reveals a dense side-view three-dimensional neural network. A clickable progress rail on the right exposes each phase.
+The repository includes a self-contained, dependency-free frontend concept in `index.html`. A continuous 15-second animation shows a shaded 3D DNA double helix spinning, moving left, shedding base-pair tokens into the first model layer, and revealing a dense side-view compression neural network.
 
 Run it locally with:
 

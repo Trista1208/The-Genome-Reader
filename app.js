@@ -1,19 +1,15 @@
 (() => {
   const canvas = document.getElementById("sequence-canvas");
   const context = canvas.getContext("2d");
-  const story = document.getElementById("scroll-story");
-  const railFill = document.getElementById("rail-fill");
-  const railCurrent = document.getElementById("rail-current");
-  const railStages = [...document.querySelectorAll(".rail-stage")];
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const LOOP_DURATION = 15;
-  const SCROLL_START_TIME = .75;
-  const SCROLL_END_TIME = 14.2;
+  const SEQUENCE_START = .75;
+  const SEQUENCE_END = 14.2;
   const SPIN_END = 5.1;
   const SHIFT_END = 7;
   const TOKEN_END = 9.35;
-  const NETWORK_START = 8.25;
+  const NETWORK_START = 9.15;
   const WHITE = "248,248,246";
   const DNA_SEGMENTS = 39;
   const NETWORK_COUNTS = [30, 26, 22, 18, 14, 10, 7, 4, 1];
@@ -23,10 +19,9 @@
   let width = 0;
   let height = 0;
   let dpr = 1;
-  let elapsed = isFrozenPreview ? normalizeTime(requestedTime) : SCROLL_START_TIME;
-  let targetElapsed = elapsed;
-  let frameId = null;
+  let elapsed = isFrozenPreview ? normalizeTime(requestedTime) : prefersReducedMotion ? 12.2 : 0;
   let lastFrame = performance.now();
+  let lastRender = lastFrame;
   const pointer = { x: -9999, y: -9999 };
 
   const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -137,7 +132,7 @@
   }
 
   function dnaCamera(time) {
-    const spin = smooth((time - SCROLL_START_TIME) / (SPIN_END - SCROLL_START_TIME));
+    const spin = smooth((time - SEQUENCE_START) / (SPIN_END - SEQUENCE_START));
     const shift = smooth((time - SPIN_END) / (SHIFT_END - SPIN_END));
     return {
       x: lerp(width * .5, width * .205, shift),
@@ -209,10 +204,10 @@
   }
 
   function buildNetwork(time) {
-    const firstLayerReveal = smooth((time - SHIFT_END + .45) / 1.2);
-    const reveal = smooth((time - NETWORK_START) / (SCROLL_END_TIME - NETWORK_START - .35));
-    const left = width < 760 ? width * .32 : width * .255;
-    const right = width < 760 ? width * .91 : width * .87;
+    const firstLayerReveal = smooth((time - SHIFT_END + .2) / 1.4);
+    const reveal = smooth((time - NETWORK_START) / (SEQUENCE_END - NETWORK_START - .35));
+    const left = width < 760 ? width * .43 : width * .45;
+    const right = width < 760 ? width * .91 : width * .88;
     const verticalSpan = Math.min(height * .78, 760);
     const layers = NETWORK_COUNTS.map((count, layerIndex) => {
       const layerAmount = layerIndex / (NETWORK_COUNTS.length - 1);
@@ -237,7 +232,7 @@
     });
     const inputCount = Math.ceil(DNA_SEGMENTS / 3);
     const inputSpan = Math.min(height * .73, 710);
-    const inputX = width < 760 ? width * .13 : width * .105;
+    const inputX = width < 760 ? width * .34 : width * .35;
     const inputs = Array.from({ length: inputCount }, (_, index) => ({
       x: inputX + (index % 2 === 0 ? -3 : 4),
       y: height * .5 + (index / (inputCount - 1) - .5) * inputSpan,
@@ -246,7 +241,7 @@
     return {
       layers,
       inputs,
-      inputReveal: smooth((time - SHIFT_END + .2) / 1.45),
+      inputReveal: smooth((time - 8.45) / .9),
       reveal,
     };
   }
@@ -347,92 +342,50 @@
 
   function render(time) {
     context.clearRect(0, 0, width, height);
+    const sceneAlpha = Math.min(
+      smooth(time / .6),
+      1 - smooth((time - SEQUENCE_END) / (LOOP_DURATION - SEQUENCE_END)),
+    );
+    context.save();
+    context.globalAlpha = sceneAlpha;
     const network = buildNetwork(time);
-    const dnaFade = 1 - smooth((time - 9.25) / 1.75);
+    const dnaFade = 1 - smooth((time - 8.05) / 1.05);
     const dna = drawRealisticDna(time, dnaFade);
     drawNetwork(time, network);
     drawTokenFlow(time, dna, network);
+    context.restore();
   }
-
-  function phaseForTime(time) {
-    if (time < 2.35) return 0;
-    if (time < SPIN_END) return 1;
-    if (time < 7.9) return 2;
-    if (time < 10.4) return 3;
-    return 4;
-  }
-
-  function updateRail(progress, time) {
-    const phase = phaseForTime(time);
-    railFill.style.height = `${progress * 100}%`;
-    railCurrent.textContent = String(phase + 1).padStart(2, "0");
-    railStages.forEach((stage, index) => {
-      const active = index === phase;
-      stage.classList.toggle("is-active", active);
-      if (active) stage.setAttribute("aria-current", "step");
-      else stage.removeAttribute("aria-current");
-    });
-  }
-
-  function startRenderLoop() {
-    if (frameId === null) frameId = requestAnimationFrame(animate);
-  }
-
-  function updateScrollTarget() {
-    const availableScroll = Math.max(1, story.offsetHeight - window.innerHeight);
-    const progress = isFrozenPreview
-      ? clamp((requestedTime - SCROLL_START_TIME) / (SCROLL_END_TIME - SCROLL_START_TIME))
-      : clamp(window.scrollY / availableScroll);
-    targetElapsed = isFrozenPreview
-      ? requestedTime
-      : SCROLL_START_TIME + progress * (SCROLL_END_TIME - SCROLL_START_TIME);
-    if (prefersReducedMotion || isFrozenPreview) elapsed = targetElapsed;
-    story.classList.toggle("has-scrolled", progress > .012);
-    updateRail(progress, targetElapsed);
-    startRenderLoop();
-  }
-
-  railStages.forEach((stage) => stage.addEventListener("click", () => {
-    const time = Number(stage.dataset.time);
-    const availableScroll = Math.max(1, story.offsetHeight - window.innerHeight);
-    window.scrollTo({
-      top: clamp((time - SCROLL_START_TIME) / (SCROLL_END_TIME - SCROLL_START_TIME)) * availableScroll,
-      behavior: prefersReducedMotion ? "auto" : "smooth",
-    });
-  }));
 
   function animate(now) {
-    const delta = Math.min((now - lastFrame) / 1000, .05);
+    if (now - lastRender < 1000 / 30) {
+      requestAnimationFrame(animate);
+      return;
+    }
+    const delta = Math.min((now - lastFrame) / 1000, .08);
     lastFrame = now;
-    const distance = targetElapsed - elapsed;
+    lastRender = now;
     if (!prefersReducedMotion && !isFrozenPreview) {
-      const smoothing = 1 - Math.pow(.0007, delta);
-      elapsed += distance * smoothing;
+      elapsed = mod(elapsed + delta, LOOP_DURATION);
     }
     render(elapsed);
-    if (Math.abs(targetElapsed - elapsed) > .0007) frameId = requestAnimationFrame(animate);
-    else {
-      elapsed = targetElapsed;
-      render(elapsed);
-      frameId = null;
-    }
+    if (!prefersReducedMotion && !isFrozenPreview) requestAnimationFrame(animate);
   }
 
-  window.addEventListener("scroll", updateScrollTarget, { passive: true });
   window.addEventListener("pointermove", (event) => {
     pointer.x = event.clientX;
     pointer.y = event.clientY;
-    startRenderLoop();
+    if (prefersReducedMotion || isFrozenPreview) render(elapsed);
   }, { passive: true });
   document.documentElement.addEventListener("pointerleave", () => {
     pointer.x = -9999;
     pointer.y = -9999;
-    startRenderLoop();
+    if (prefersReducedMotion || isFrozenPreview) render(elapsed);
   });
   window.addEventListener("resize", () => {
     resize();
-    updateScrollTarget();
+    render(elapsed);
   });
   resize();
-  updateScrollTarget();
+  render(elapsed);
+  if (!prefersReducedMotion && !isFrozenPreview) requestAnimationFrame(animate);
 })();
