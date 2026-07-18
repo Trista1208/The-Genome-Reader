@@ -12,7 +12,7 @@
   const NETWORK_START = 9.15;
   const WHITE = "248,248,246";
   const DNA_SEGMENTS = 39;
-  const NETWORK_COUNTS = [30, 26, 22, 18, 14, 10, 7, 4, 1];
+  const NETWORK_COUNTS = [48, 40, 32, 24, 18, 12, 8, 4, 1];
   const requestedTime = Number(new URLSearchParams(window.location.search).get("t"));
   const isFrozenPreview = Number.isFinite(requestedTime) && window.location.search.includes("t=");
 
@@ -70,11 +70,12 @@
   function drawTube(from, to, radius, brightness, alpha, time = 0, phase = 0) {
     if (alpha <= .003) return;
     const value = Math.round(clamp(brightness, 38, 242));
-    const shimmer = (Math.sin(time * 2.45 + phase) + 1) * .5;
+    const shimmer = (Math.sin(time * 4.15 + phase) + 1) * .5;
+    const counterShimmer = (Math.cos(time * 3.35 - phase * 1.4) + 1) * .5;
     const metal = context.createLinearGradient(from.x, from.y, to.x, to.y);
-    const dark = Math.round(12 + shimmer * 18);
-    const mid = Math.round(value * (.42 + shimmer * .12));
-    const high = Math.min(255, Math.round(value + 24 + shimmer * 22));
+    const dark = Math.round(5 + shimmer * 14);
+    const mid = Math.round(value * (.32 + shimmer * .22));
+    const high = Math.min(255, Math.round(value + 34 + shimmer * 28));
     metal.addColorStop(0, `rgba(${dark},${dark},${dark},${alpha})`);
     metal.addColorStop(.16 + shimmer * .07, `rgba(${high},${high},${high},${alpha})`);
     metal.addColorStop(.38 + shimmer * .06, `rgba(${mid},${mid},${mid},${alpha})`);
@@ -83,6 +84,8 @@
     metal.addColorStop(1, `rgba(${Math.round(mid * .7)},${Math.round(mid * .7)},${Math.round(mid * .7)},${alpha})`);
     context.save();
     context.lineCap = "round";
+    context.shadowColor = `rgba(255,255,255,${alpha * (.12 + counterShimmer * .18)})`;
+    context.shadowBlur = 2 + counterShimmer * 4;
     context.strokeStyle = `rgba(0,0,0,${alpha * .92})`;
     context.lineWidth = radius + 7;
     context.beginPath();
@@ -99,15 +102,18 @@
     context.lineWidth = Math.max(1, radius * .22);
     context.stroke();
 
-    const specular = mod(time * .31 + phase * .117, 1);
-    const specularStart = clamp(specular - .1);
-    const specularEnd = clamp(specular + .1);
-    context.strokeStyle = `rgba(255,255,255,${alpha * (.25 + shimmer * .42)})`;
-    context.lineWidth = Math.max(1, radius * .3);
-    context.beginPath();
-    context.moveTo(lerp(from.x, to.x, specularStart), lerp(from.y, to.y, specularStart));
-    context.lineTo(lerp(from.x, to.x, specularEnd), lerp(from.y, to.y, specularEnd));
-    context.stroke();
+    const drawReflection = (position, span, strength, thickness) => {
+      const start = clamp(position - span);
+      const end = clamp(position + span);
+      context.strokeStyle = `rgba(255,255,255,${alpha * strength})`;
+      context.lineWidth = Math.max(1, radius * thickness);
+      context.beginPath();
+      context.moveTo(lerp(from.x, to.x, start), lerp(from.y, to.y, start));
+      context.lineTo(lerp(from.x, to.x, end), lerp(from.y, to.y, end));
+      context.stroke();
+    };
+    drawReflection(mod(time * .78 + phase * .117, 1), .11, .36 + shimmer * .5, .34);
+    drawReflection(mod(time * .53 - phase * .083 + .47, 1), .065, .2 + counterShimmer * .34, .18);
     context.restore();
   }
 
@@ -171,11 +177,12 @@
     const rise = Math.min(width, height) * .041;
     const nodes = [];
     for (let index = 0; index < DNA_SEGMENTS; index += 1) {
-      const distortion = Math.sin(time * 1.85 + index * .72) * 3.2
-        + Math.sin(time * 3.1 - index * .34) * 1.35;
+      const distortion = Math.sin(time * 2.7 + index * .72) * 5.2
+        + Math.sin(time * 4.6 - index * .34) * 2.15;
       const localRadius = radius + distortion;
-      const angle = index * .55 + Math.sin(time * .72 + index * .19) * .012;
-      const y = (index - (DNA_SEGMENTS - 1) / 2) * rise;
+      const angle = index * .55 + Math.sin(time * 1.25 + index * .19) * .028;
+      const y = (index - (DNA_SEGMENTS - 1) / 2) * rise
+        + Math.sin(time * 1.8 + index * .43) * 2.6;
       const strandA = projectDna(Math.cos(angle) * localRadius, y, Math.sin(angle) * localRadius, camera);
       const strandB = projectDna(Math.cos(angle + Math.PI) * localRadius, y, Math.sin(angle + Math.PI) * localRadius, camera);
       nodes.push({ index, strandA, strandB, middle: { x: (strandA.x + strandB.x) / 2, y: (strandA.y + strandB.y) / 2 } });
@@ -296,7 +303,7 @@
         const activation = Math.max(baseActivation, hover);
         line(from, to, connectionAlpha * (.045 + activation * .135), .52 + activation * .48, activation > .76 ? WHITE : "124,124,122");
         if (selector === 0 && activation > .1) {
-          const travel = mod(time * .34 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
+          const travel = mod(time * 1.32 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
           const pulse = { x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) };
           const tail = { x: lerp(from.x, to.x, clamp(travel - .055)), y: lerp(from.y, to.y, clamp(travel - .055)) };
           line(tail, pulse, connectionAlpha * activation * .72, 1.3, WHITE);
