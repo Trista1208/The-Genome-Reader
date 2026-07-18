@@ -206,9 +206,16 @@
   function buildNetwork(time) {
     const firstLayerReveal = smooth((time - SHIFT_END + .2) / 1.4);
     const reveal = smooth((time - NETWORK_START) / (SEQUENCE_END - NETWORK_START - .35));
-    const left = width < 760 ? width * .43 : width * .45;
-    const right = width < 760 ? width * .91 : width * .88;
-    const verticalSpan = Math.min(height * .78, 760);
+    const focus = smooth((time - 9.25) / 1.45);
+    const stagedLeft = width < 760 ? width * .43 : width * .45;
+    const stagedRight = width < 760 ? width * .91 : width * .88;
+    const left = lerp(stagedLeft, width * .07, focus);
+    const right = lerp(stagedRight, width * .93, focus);
+    const verticalSpan = lerp(
+      Math.min(height * .78, 760),
+      Math.min(height * .86, 860),
+      focus,
+    );
     const layers = NETWORK_COUNTS.map((count, layerIndex) => {
       const layerAmount = layerIndex / (NETWORK_COUNTS.length - 1);
       const x = lerp(left, right, layerAmount);
