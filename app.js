@@ -16,7 +16,7 @@
   const NETWORK_START = 8.25;
   const WHITE = "248,248,246";
   const DNA_SEGMENTS = 39;
-  const NETWORK_COUNTS = [12, 11, 10, 8, 6, 2];
+  const NETWORK_COUNTS = [12, 10, 9, 7, 5, 1];
   const requestedTime = Number(new URLSearchParams(window.location.search).get("t"));
   const isFrozenPreview = Number.isFinite(requestedTime) && window.location.search.includes("t=");
 
@@ -27,6 +27,7 @@
   let targetElapsed = elapsed;
   let frameId = null;
   let lastFrame = performance.now();
+  const pointer = { x: -9999, y: -9999 };
 
   const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
   const mod = (value, divisor) => ((value % divisor) + divisor) % divisor;
@@ -210,18 +211,18 @@
   function buildNetwork(time) {
     const firstLayerReveal = smooth((time - SHIFT_END + .45) / 1.2);
     const reveal = smooth((time - NETWORK_START) / (SCROLL_END_TIME - NETWORK_START - .35));
-    const left = width < 760 ? width * .38 : width * .43;
-    const right = width < 760 ? width * .93 : width * .9;
-    const verticalSpan = Math.min(height * .7, 650);
+    const left = width < 760 ? width * .32 : width * .255;
+    const right = width < 760 ? width * .91 : width * .87;
+    const verticalSpan = Math.min(height * .78, 760);
     const layers = NETWORK_COUNTS.map((count, layerIndex) => {
       const layerAmount = layerIndex / (NETWORK_COUNTS.length - 1);
       const x = lerp(left, right, layerAmount);
       const nodes = Array.from({ length: count }, (_, nodeIndex) => {
         const amount = count === 1 ? .5 : nodeIndex / (count - 1);
-        const depth = ((nodeIndex + layerIndex) % 3 - 1) * 34 + Math.sin(nodeIndex * 1.7 + layerIndex) * 12;
+        const depth = ((nodeIndex + layerIndex) % 3 - 1) * 16 + Math.sin(nodeIndex * 1.7 + layerIndex) * 5;
         return {
-          x: x + depth * .28,
-          y: height * .5 + (amount - .5) * verticalSpan - depth * .12,
+          x: x + depth * .2,
+          y: height * .5 + (amount - .5) * verticalSpan - depth * .08,
           depth,
           layerIndex,
           nodeIndex,
@@ -234,34 +235,78 @@
           : smooth(reveal * (NETWORK_COUNTS.length + .35) - (layerIndex - 1) * .92),
       };
     });
-    return { layers, reveal };
+    const inputCount = Math.ceil(DNA_SEGMENTS / 3);
+    const inputSpan = Math.min(height * .73, 710);
+    const inputX = width < 760 ? width * .13 : width * .105;
+    const inputs = Array.from({ length: inputCount }, (_, index) => ({
+      x: inputX + (index % 2 === 0 ? -3 : 4),
+      y: height * .5 + (index / (inputCount - 1) - .5) * inputSpan,
+      nodeIndex: index,
+    }));
+    return {
+      layers,
+      inputs,
+      inputReveal: smooth((time - SHIFT_END + .2) / 1.45),
+      reveal,
+    };
+  }
+
+  function hoverActivation(node) {
+    return clamp(1 - Math.hypot(node.x - pointer.x, node.y - pointer.y) / 185);
+  }
+
+  function drawSynapseNode(node, radius, alpha, activation) {
+    if (alpha <= .003) return;
+    context.save();
+    context.shadowColor = `rgba(${WHITE},${.36 + activation * .58})`;
+    context.shadowBlur = 7 + activation * 13;
+    context.fillStyle = `rgba(${WHITE},${alpha * (.72 + activation * .28)})`;
+    context.beginPath();
+    context.arc(node.x, node.y, radius + activation * 1.8, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
   }
 
   function drawNetwork(time, network) {
-    const { layers, reveal } = network;
+    const { layers, inputs, inputReveal, reveal } = network;
+    const firstLayer = layers[0];
+
+    inputs.forEach((input) => firstLayer.nodes.forEach((node) => {
+      const selector = (input.nodeIndex * 7 + node.nodeIndex * 5) % 11;
+      if (selector > 7) return;
+      const hover = Math.max(hoverActivation(input), hoverActivation(node));
+      const activation = Math.max(smooth(reveal * 7 - selector * .045), hover);
+      line(input, node, inputReveal * firstLayer.reveal * (.045 + activation * .15), .55 + activation * .5, activation > .72 ? WHITE : "122,122,120");
+    }));
+
     for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex += 1) {
       const layer = layers[layerIndex];
       const nextLayer = layers[layerIndex + 1];
       const connectionAlpha = Math.min(layer.reveal, nextLayer.reveal);
       if (connectionAlpha <= .003) continue;
       layer.nodes.forEach((from) => nextLayer.nodes.forEach((to) => {
-        const selector = (from.nodeIndex * 7 + to.nodeIndex * 11 + layerIndex * 5) % 9;
-        if (selector > 4) return;
-        const activation = smooth(reveal * (layers.length + .6) - layerIndex - selector * .035);
-        line(from, to, connectionAlpha * (.035 + activation * .09), .55 + activation * .35, selector === 0 ? WHITE : "150,150,148");
-        if (selector === 0 && activation > .12) {
-          const travel = clamp(activation * 1.45 - .22);
-          drawSphere({ x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) }, 2.1, 248, connectionAlpha * activation);
+        const selector = (from.nodeIndex * 7 + to.nodeIndex * 11 + layerIndex * 5) % 11;
+        if (selector > 7) return;
+        const hover = Math.max(hoverActivation(from), hoverActivation(to));
+        const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - selector * .032);
+        const activation = Math.max(baseActivation, hover);
+        line(from, to, connectionAlpha * (.045 + activation * .135), .52 + activation * .48, activation > .76 ? WHITE : "124,124,122");
+        if (selector <= 1 && activation > .1) {
+          const travel = mod(time * .34 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
+          const pulse = { x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) };
+          const tail = { x: lerp(from.x, to.x, clamp(travel - .055)), y: lerp(from.y, to.y, clamp(travel - .055)) };
+          line(tail, pulse, connectionAlpha * activation * .72, 1.3, WHITE);
+          drawSynapseNode(pulse, 1.7, connectionAlpha * activation, activation);
         }
       }));
     }
 
     layers.forEach((layer, layerIndex) => {
       if (layer.reveal <= .003) return;
-      if (layer.nodes.length > 1) line(layer.nodes[0], layer.nodes[layer.nodes.length - 1], layer.reveal * .2, 1, "118,118,116");
       layer.nodes.forEach((node) => {
-        const activation = smooth(reveal * (layers.length + .7) - layerIndex - node.nodeIndex * .018);
-        drawSphere(node, 3.4 + activation * 2.2, 150 + activation * 98, layer.reveal * (.55 + activation * .45));
+        const baseActivation = smooth(reveal * (layers.length + .7) - layerIndex - node.nodeIndex * .018);
+        const activation = Math.max(baseActivation, hoverActivation(node));
+        drawSynapseNode(node, 3.25 + activation * 1.65, layer.reveal, activation);
       });
     });
   }
@@ -270,7 +315,7 @@
     const progress = smooth((time - SHIFT_END + .25) / (TOKEN_END - SHIFT_END + .15));
     if (progress <= .003) return;
     const origins = dna.nodes.filter((node) => node.index % 3 === 1);
-    const targets = network.layers[0].nodes;
+    const targets = network.inputs;
     origins.forEach((originNode, index) => {
       const target = targets[index % targets.length];
       const localProgress = smooth(progress * 1.35 - index * .025);
@@ -281,6 +326,9 @@
       const position = pointOnCurve(origin, controlA, controlB, target, localProgress);
       const previous = pointOnCurve(origin, controlA, controlB, target, clamp(localProgress - .1));
       line(previous, position, .42 + localProgress * .48, 1.2);
+      if (localProgress > .82) {
+        line({ x: target.x - 54, y: target.y }, target, (localProgress - .82) / .18 * .74, 1.1);
+      }
 
       context.save();
       context.translate(position.x, position.y);
@@ -300,7 +348,7 @@
   function render(time) {
     context.clearRect(0, 0, width, height);
     const network = buildNetwork(time);
-    const dnaFade = 1 - network.reveal * .58;
+    const dnaFade = 1 - smooth((time - 9.25) / 1.75);
     const dna = drawRealisticDna(time, dnaFade);
     drawNetwork(time, network);
     drawTokenFlow(time, dna, network);
@@ -371,6 +419,16 @@
   }
 
   window.addEventListener("scroll", updateScrollTarget, { passive: true });
+  window.addEventListener("pointermove", (event) => {
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    startRenderLoop();
+  }, { passive: true });
+  document.documentElement.addEventListener("pointerleave", () => {
+    pointer.x = -9999;
+    pointer.y = -9999;
+    startRenderLoop();
+  });
   window.addEventListener("resize", () => {
     resize();
     updateScrollTarget();
