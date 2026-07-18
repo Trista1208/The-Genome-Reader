@@ -1,0 +1,22 @@
+# Large downloaded data (re-fetch with scripts/)
+data/raw/
+
+# Keep processed cohort manifests in git; ignore other processed outputs
+data/processed/*
+!data/processed/cohort/
+data/processed/cohort/*
+!data/processed/cohort/cohort_summary.json
+!data/processed/cohort/genome_list.txt
+!data/processed/cohort/genome_antibiotic_labels.tsv
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,46 @@
+{
+  "species": "Escherichia coli",
+  "n_genomes": 3000,
+  "antibiotics": [
+    {
+      "name": "gentamicin",
+      "n_genomes": 7314,
+      "n_resistant": 850,
+      "n_susceptible": 6673
+    },
+    {
+      "name": "ciprofloxacin",
+      "n_genomes": 7255,
+      "n_resistant": 1799,
+      "n_susceptible": 5661
+    },
+    {
+      "name": "ceftazidime",
+      "n_genomes": 7000,
+      "n_resistant": 976,
+      "n_susceptible": 6210
+    },
+    {
+      "name": "cefotaxime",
+      "n_genomes": 6506,
+      "n_resistant": 1220,
+      "n_susceptible": 5287
+    },
+    {
+      "name": "piperacillin/tazobactam",
+      "n_genomes": 6322,
+      "n_resistant": 474,
+      "n_susceptible": 5849
+    }
+  ],
+  "label_rows": 15230,
+  "paths": {
+    "genome_list": "data/processed/cohort/genome_list.txt",
+    "labels": "data/processed/cohort/genome_antibiotic_labels.tsv"
+  },
+  "notes": [
+    "resistant -> likely_to_fail; susceptible -> likely_to_work",
+    "Use laboratory phenotypes only; exclude computational predictions where flagged",
+    "Organizer fixed split should replace this cohort when available"
+  ]
+}

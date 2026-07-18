@@ -171,10 +171,32 @@ This is a **research prototype**. Predictions from historical genomes are **not*
 
 ## Status / next steps for this repo
 
+- [x] Download BV-BRC RELEASE_NOTES (AMR phenotypes + genome metadata)  
+- [x] Download AMRFinderPlus latest database  
+- [x] Select interim cohort (E. coli, 5 antibiotics, 3,000 genomes) — replace when organizer dataset ships  
+- [ ] Download cohort FASTA assemblies  
 - [ ] Document FASTA → AMRFinderPlus → feature matrix pipeline  
 - [ ] Specify feature output schema for Module 02  
-- [ ] Run on organizer fixed dataset (when available)  
-- [ ] Version outputs + checksums for reproducibility  
+- [ ] Homology de-duplication + per-drug logistic regression (Module 02)  
+- [ ] Streamlit/Gradio decision report with no-call (Module 03)  
+
+## Data download (repeatable)
+
+See [`data/DATA_SOURCES.md`](data/DATA_SOURCES.md).
+
+```bash
+# Metadata + lab AMR labels (BV-BRC FTPS)
+bash scripts/download_bvbrc_release_notes_lftp.sh
+
+# AMRFinderPlus reference DB (NCBI HTTPS)
+python3 scripts/download_amrfinder_db.py
+
+# Pick 1 species + 3–5 antibiotics (lab-measured only)
+python3 scripts/select_cohort.py --species "Escherichia coli" --n-antibiotics 5 --max-genomes 3000
+
+# FASTA assemblies for the cohort (lftp; resume-safe)
+bash scripts/download_bvbrc_genomes.sh data/processed/cohort/genome_list.txt data/raw/bvbrc/genomes 6
+```
 
 ---
 
@@ -182,4 +204,5 @@ This is a **research prototype**. Predictions from historical genomes are **not*
 
 - Challenge brief: *Genome Firewall: An AI Defense System Against Superbugs* (Hack-Nation 6th Global AI Hackathon)  
 - [AMRFinderPlus](https://github.com/ncbi/amr)  
+- [BV-BRC FTP](https://www.bv-brc.org/docs/quick_references/ftp.html)  
 - [BV-BRC](https://www.bv-brc.org)
