@@ -181,11 +181,7 @@ function GenomeReader({ runInference, mode }: { runInference: RunInference; mode
       </header>
 
       <section className="hero" id="top">
-        <p className="eyebrow"><span>01</span> GENOMIC DECISION SUPPORT</p>
-        <h1>Read the sequence.<br /><em>Reveal the response.</em></h1>
-        <p className="hero-copy">
-          Estimate antibiotic effectiveness from an assembled bacterial genome through a calibrated classifier endpoint.
-        </p>
+        <h1>antibiotic check</h1>
       </section>
 
       <section className={`analysis-workspace phase-${phase}`} aria-label="Genome analysis workspace">
