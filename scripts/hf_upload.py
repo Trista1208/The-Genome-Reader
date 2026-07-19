@@ -65,9 +65,10 @@ cluster. Labels: BV-BRC lab-measured AST re-derived against EUCAST v16.1 breakpo
 import skops.io as sio
 from huggingface_hub import hf_hub_download
 path = hf_hub_download(repo_id="{repo_id}", filename="models/ciprofloxacin/model.skops")
-clf = sio.load(path, trusted=True)  # skops: safe deserialization
+bundle = sio.load(path, trusted=sio.get_untrusted_types(file=path))
+clf = bundle["model"]  # calibrated elastic-net LR; bundle also has no-call bands + metadata
 # X = feature vector aligned with features/feature_columns.json (0/1 per AMR element)
-# proba = clf.predict_proba(X)
+# p_fail = clf.predict_proba(X)[0][1]
 ```
 
 Pipeline to produce features from a FASTA + full report:
