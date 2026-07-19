@@ -24,4 +24,5 @@ ENV AMRFINDER_THREADS=4
 EXPOSE 8000
 
 # Optional: set INFERENCE_API_TOKEN to require a bearer token on /predict.
-CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell form so ${PORT} (Render, etc.) expands; falls back to 8000 (HF Spaces app_port).
+CMD uvicorn serve:app --host 0.0.0.0 --port ${PORT:-8000}

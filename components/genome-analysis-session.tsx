@@ -1,13 +1,14 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { Antibiotic } from "@/lib/types";
+import type { Antibiotic, PatientInput } from "@/lib/types";
 import type { FastaSummary } from "@/lib/fasta";
 
 export interface PendingGenomeAnalysis {
   file: File;
   summary: FastaSummary;
   antibiotic: Antibiotic;
+  patient: PatientInput;
   runId: number;
 }
 

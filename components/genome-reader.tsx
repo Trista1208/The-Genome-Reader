@@ -13,10 +13,22 @@ import {
   type ChangeEvent,
   type DragEvent,
 } from "react";
-import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
+import {
+  ANTIBIOTICS,
+  type AnalysisReport,
+  type AnalysisResult,
+  type Antibiotic,
+  type GenerateReport,
+  type PatientInput,
+  type RunInference,
+} from "@/lib/types";
 import { formatBases, validateFasta, type FastaSummary } from "@/lib/fasta";
 import { useGenomeAnalysisSession } from "@/components/genome-analysis-session";
 import { ShaderAnimation } from "@/components/ui/shader-lines";
+import { ReportView } from "@/components/report-view";
+import { savePatientResult, saveReportForAnalysis } from "@/lib/local-history";
+
+const CONVEX_ENABLED = Boolean(process.env.NEXT_PUBLIC_CONVEX_URL);
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
 
@@ -48,15 +60,16 @@ export function GenomeReaderApp() {
 
 export function GenomeAnalysisRunApp({ convexEnabled }: { convexEnabled: boolean }) {
   if (convexEnabled) return <ConnectedGenomeAnalysisRun />;
-  return <GenomeAnalysisRun runInference={runDemoInference} />;
+  return <GenomeAnalysisRun runInference={runDemoInference} generateReport={generateDemoReport} />;
 }
 
 function ConnectedGenomeAnalysisRun() {
   const generateUploadUrl = useMutation(anyApi.files.generateUploadUrl);
   const runModel = useAction(anyApi.analysis.runInference);
+  const runReport = useAction(anyApi.report.generateReport);
 
   const runInference: RunInference = useCallback(
-    async (file, antibiotic, onUploaded) => {
+    async (file, antibiotic, patient, onUploaded) => {
       const uploadUrl = await generateUploadUrl({});
       const response = await fetch(uploadUrl, {
         method: "POST",
@@ -71,24 +84,78 @@ function ConnectedGenomeAnalysisRun() {
         fileName: file.name,
         fileSize: file.size,
         antibiotic,
+        patient,
       })) as AnalysisResult;
     },
     [generateUploadUrl, runModel],
   );
 
-  return <GenomeAnalysisRun runInference={runInference} />;
+  const generateReport: GenerateReport = useCallback(
+    async (result, antibiotic, fileName) =>
+      (await runReport({
+        analysisId: result.analysisId,
+        antibiotic,
+        fileName,
+        score: result.score,
+        confidence: result.confidence,
+        classification: result.classification,
+        evidence: result.evidence,
+        detectedGenes: result.detectedGenes,
+        sequenceLength: result.sequenceLength,
+        contigCount: result.contigCount,
+      })) as AnalysisReport,
+    [runReport],
+  );
+
+  return <GenomeAnalysisRun runInference={runInference} generateReport={generateReport} />;
 }
 
 async function runDemoInference(
   file: File,
   _antibiotic: Antibiotic,
+  _patient: PatientInput,
   onUploaded: () => void,
 ): Promise<AnalysisResult> {
   await new Promise((resolve) => window.setTimeout(resolve, 700));
   onUploaded();
   const summary = await validateFasta(file);
   await new Promise((resolve) => window.setTimeout(resolve, 900));
-  return { ...DEMO_RESULT, sequenceLength: summary.bases, contigCount: summary.contigs };
+  const analysisId = `local-${Date.now()}`;
+  return { ...DEMO_RESULT, analysisId, sequenceLength: summary.bases, contigCount: summary.contigs };
+}
+
+// Local stand-in for the AI reviewer subagent so the run page demonstrates the
+// second-opinion flow without Convex or an OpenAI key. Derived heuristically
+// from the classifier's own verdict and detected genes.
+async function generateDemoReport(
+  result: AnalysisResult,
+  antibiotic: Antibiotic,
+): Promise<AnalysisReport> {
+  await new Promise((resolve) => window.setTimeout(resolve, 1_600));
+  const genes = result.detectedGenes?.map((g) => g.symbol) ?? [];
+  const geneList = genes.length ? genes.join(", ") : "no known resistance markers";
+  const verdictWord =
+    result.classification === "likely_effective"
+      ? "should remain effective"
+      : result.classification === "likely_ineffective"
+        ? "is at risk of resistance"
+        : "gives a mixed signal";
+  return {
+    summary: `Reviewing this genome against ${antibiotic}, the profile ${verdictWord}. Detected: ${geneList}.`,
+    keyFindings: genes.length
+      ? [
+          `${genes.length} resistance-associated gene${genes.length === 1 ? "" : "s"} detected (${geneList}).`,
+          "Gene profile is broadly consistent with the classifier's calibrated score.",
+        ]
+      : [
+          "No known resistance markers were detected in the assembly.",
+          "Absence of markers supports a susceptible read on this drug.",
+        ],
+    independentVerdict: result.classification,
+    agreement: "agree",
+    reasoning:
+      "This offline demo report mirrors the classifier's verdict. Connect the inference and OpenAI services for an independent AI cross-check.",
+  };
 }
 
 function GenomeReader() {
@@ -99,8 +166,15 @@ function GenomeReader() {
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<FastaSummary | null>(null);
   const [antibiotic, setAntibiotic] = useState<Antibiotic>(ANTIBIOTICS[0]);
+  const [patientId, setPatientId] = useState("");
+  const [patientName, setPatientName] = useState("");
+  const [patientDob, setPatientDob] = useState("");
+  const [patientNotes, setPatientNotes] = useState("");
   const [error, setError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+
+  const patientReady = patientId.trim().length > 0 && patientName.trim().length > 0;
+  const canRun = Boolean(file && summary) && patientReady;
 
   const acceptFile = useCallback(async (candidate: File) => {
     setError("");
@@ -118,8 +192,14 @@ function GenomeReader() {
   }, []);
 
   const startAnalysis = () => {
-    if (!file || !summary) return;
-    beginAnalysis({ file, summary, antibiotic, runId: Date.now() });
+    if (!file || !summary || !patientReady) return;
+    const patient: PatientInput = {
+      patientId: patientId.trim(),
+      name: patientName.trim(),
+      dob: patientDob.trim() || undefined,
+      notes: patientNotes.trim() || undefined,
+    };
+    beginAnalysis({ file, summary, antibiotic, patient, runId: Date.now() });
     router.push("/analyze/run");
   };
 
@@ -159,6 +239,7 @@ function GenomeReader() {
           <span aria-hidden="true">B</span>
           <strong>BREAKPOINT</strong>
         </Link>
+        <Link className="analysis-records-link" href="/knowledge">PATIENT RECORDS</Link>
         <p><span>GENOMIC RESPONSE CHECK</span><b>01 / FASTA</b></p>
       </header>
 
@@ -208,6 +289,54 @@ function GenomeReader() {
               </div>
             </div>
 
+            <fieldset className="patient-fields">
+              <legend>PATIENT</legend>
+              <div className="patient-grid">
+                <label htmlFor="patient-id">
+                  <span>PATIENT ID <i>*</i></span>
+                  <input
+                    id="patient-id"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="e.g. MRN-4471"
+                    value={patientId}
+                    onChange={(event) => setPatientId(event.target.value)}
+                  />
+                </label>
+                <label htmlFor="patient-name">
+                  <span>NAME <i>*</i></span>
+                  <input
+                    id="patient-name"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="e.g. Jane Doe"
+                    value={patientName}
+                    onChange={(event) => setPatientName(event.target.value)}
+                  />
+                </label>
+                <label htmlFor="patient-dob">
+                  <span>DATE OF BIRTH</span>
+                  <input
+                    id="patient-dob"
+                    type="date"
+                    value={patientDob}
+                    onChange={(event) => setPatientDob(event.target.value)}
+                  />
+                </label>
+                <label htmlFor="patient-notes" className="patient-notes-field">
+                  <span>NOTES</span>
+                  <input
+                    id="patient-notes"
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Optional clinical note"
+                    value={patientNotes}
+                    onChange={(event) => setPatientNotes(event.target.value)}
+                  />
+                </label>
+              </div>
+            </fieldset>
+
             <div className="reader-controls">
               <label htmlFor="antibiotic">
                 <span>TARGET ANTIBIOTIC</span>
@@ -227,11 +356,17 @@ function GenomeReader() {
             <button
               className="analysis-button"
               type="button"
-              disabled={!file}
+              disabled={!canRun}
               onClick={startAnalysis}
               data-testid="analyze-button"
             >
-              <span>{file ? "Run genome analysis" : "Select a genome to continue"}</span>
+              <span>
+                {!file
+                  ? "Select a genome to continue"
+                  : !patientReady
+                    ? "Add patient ID and name to continue"
+                    : "Run genome analysis"}
+              </span>
               <ArrowIcon />
             </button>
             {error ? <p className="error-message" role="alert"><span>!</span>{error}</p> : null}
@@ -248,13 +383,21 @@ function GenomeReader() {
   );
 }
 
-function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
+function GenomeAnalysisRun({
+  runInference,
+  generateReport,
+}: {
+  runInference: RunInference;
+  generateReport: GenerateReport;
+}) {
   const router = useRouter();
   const { pending, clearAnalysis } = useGenomeAnalysisSession();
   const [phase, setPhase] = useState<"processing" | "complete" | "error">("processing");
   const [stageIndex, setStageIndex] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
+  const [report, setReport] = useState<AnalysisReport | null>(null);
+  const [reportError, setReportError] = useState(false);
 
   useEffect(() => {
     if (!pending) {
@@ -273,7 +416,7 @@ function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
       try {
         const sequenceDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1_200 : 15_250;
         const minimumSequence = new Promise<void>((resolve) => window.setTimeout(resolve, sequenceDuration));
-        const inference = runInference(pending.file, pending.antibiotic, () => {
+        const inference = runInference(pending.file, pending.antibiotic, pending.patient, () => {
           if (active) setStageIndex((current) => Math.max(current, 1));
         });
         const [nextResult] = await Promise.all([inference, minimumSequence]);
@@ -293,6 +436,38 @@ function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
       timers.forEach(window.clearTimeout);
     };
   }, [pending, router, runInference]);
+
+  // In demo/offline mode the backend never sees the run, so persist the result
+  // to the localStorage knowledge tree ourselves. (Convex mode already stores it.)
+  useEffect(() => {
+    if (CONVEX_ENABLED || phase !== "complete" || !result || !pending) return;
+    savePatientResult({
+      patient: pending.patient,
+      result,
+      fileName: pending.file.name,
+      antibiotic: pending.antibiotic,
+    });
+  }, [phase, result, pending]);
+
+  // The AI reviewer subagent runs concurrently: it fires the moment the
+  // classifier result is ready and streams into its own section, so the main
+  // score never waits on it.
+  useEffect(() => {
+    if (phase !== "complete" || !result || !pending) return;
+    let active = true;
+    generateReport(result, pending.antibiotic, pending.file.name)
+      .then((next) => {
+        if (!active) return;
+        setReport(next);
+        if (!CONVEX_ENABLED && result.analysisId) saveReportForAnalysis(result.analysisId, next);
+      })
+      .catch(() => {
+        if (active) setReportError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [phase, result, pending, generateReport]);
 
   if (!pending) return <main className="app-shell" aria-label="Returning to genome upload" />;
 
@@ -318,6 +493,7 @@ function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
           <span aria-hidden="true">B</span>
           <strong>BREAKPOINT</strong>
         </Link>
+        <Link className="analysis-records-link" href="/knowledge">PATIENT RECORDS</Link>
         <p><span>GENOMIC RESPONSE CHECK</span><b>02 / MODEL RUN</b></p>
       </header>
 
@@ -355,7 +531,14 @@ function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
 
               {phase === "processing" ? <ProcessingState stage={stage} stageIndex={stageIndex} /> : null}
               {phase === "complete" && result ? (
-                <ResultState result={result} antibiotic={pending.antibiotic} fileName={pending.file.name} onReset={startOver} />
+                <ResultState
+                  result={result}
+                  antibiotic={pending.antibiotic}
+                  fileName={pending.file.name}
+                  onReset={startOver}
+                  report={report}
+                  reportError={reportError}
+                />
               ) : null}
               {phase === "error" ? (
                 <div className="run-error-state" role="alert">
@@ -416,24 +599,14 @@ function ProcessingState({ stage, stageIndex }: { stage: (typeof PROCESSING_STAG
   );
 }
 
-function ResultState({ result, antibiotic, fileName, onReset }: {
+function ResultState({ result, antibiotic, fileName, onReset, report, reportError }: {
   result: AnalysisResult;
   antibiotic: Antibiotic;
   fileName: string;
   onReset: () => void;
+  report: AnalysisReport | null;
+  reportError: boolean;
 }) {
-  const percent = Math.round(result.score * 100);
-  const label = result.classification === "likely_effective"
-    ? "Likely effective"
-    : result.classification === "likely_ineffective"
-      ? "Likely ineffective"
-      : "No-call / uncertain";
-  const evidence = result.evidence === "known_marker"
-    ? "Known resistance marker"
-    : result.evidence === "statistical_association"
-      ? "Statistical association"
-      : "No known resistance signal";
-
   return (
     <div className="result-state">
       <div className="result-stamp">
@@ -441,31 +614,13 @@ function ResultState({ result, antibiotic, fileName, onReset }: {
         <button type="button" onClick={onReset}>NEW WORKBOOK</button>
         <span>{new Date().toISOString().slice(0, 10)}</span>
       </div>
-      <div className="score-layout">
-        <div className="score-ring" style={{ "--score": `${percent * 3.6}deg` } as React.CSSProperties}>
-          <div><strong>{percent}</strong><span>%</span><small>RESPONSE<br />PROBABILITY</small></div>
-        </div>
-        <div className="score-copy">
-          <p className="score-kicker">PREDICTED EFFECTIVENESS</p>
-          <h3>{label}</h3>
-          <p>The model estimates a <strong>{percent}% probability</strong> that {antibiotic} will be effective for this genomic profile.</p>
-        </div>
-      </div>
-      <dl className="result-metrics">
-        <div><dt>Confidence</dt><dd>{Math.round(result.confidence * 100)}%</dd></div>
-        <div><dt>Evidence class</dt><dd>{evidence}</dd></div>
-        {result.detectedGenes && result.detectedGenes.length > 0 ? (
-          <div>
-            <dt>Resistance genes</dt>
-            <dd title={result.detectedGenes.map((g) => g.symbol).join(", ")}>
-              {result.detectedGenes.map((g) => g.symbol).join(", ")}
-            </dd>
-          </div>
-        ) : (
-          <div><dt>Sequence</dt><dd title={fileName}>{fileName}</dd></div>
-        )}
-      </dl>
-      <div className="clinical-warning"><span>!</span><p><strong>Laboratory confirmation required.</strong> This result is research decision support and must not be used as an autonomous treatment recommendation.</p></div>
+      <ReportView
+        result={result}
+        antibiotic={antibiotic}
+        fileName={fileName}
+        report={report}
+        reportError={reportError}
+      />
     </div>
   );
 }

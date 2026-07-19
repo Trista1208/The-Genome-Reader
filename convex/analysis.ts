@@ -19,12 +19,20 @@ const detectedGeneValidator = v.object({
   confidence: v.string(),
 });
 
+const patientValidator = v.object({
+  patientId: v.string(),
+  name: v.string(),
+  dob: v.optional(v.string()),
+  notes: v.optional(v.string()),
+});
+
 export const createPending = internalMutation({
   args: {
     storageId: v.id("_storage"),
     fileName: v.string(),
     fileSize: v.number(),
     antibiotic: v.string(),
+    patientRef: v.id("patients"),
   },
   handler: async (ctx, args) => ctx.db.insert("analyses", {
     ...args,
@@ -53,6 +61,20 @@ export const markComplete = internalMutation({
   }),
 });
 
+export const markReport = internalMutation({
+  args: {
+    analysisId: v.id("analyses"),
+    report: v.object({
+      summary: v.string(),
+      keyFindings: v.array(v.string()),
+      independentVerdict: classificationValidator,
+      agreement: v.union(v.literal("agree"), v.literal("partial"), v.literal("disagree")),
+      reasoning: v.string(),
+    }),
+  },
+  handler: async (ctx, { analysisId, report }) => ctx.db.patch(analysisId, { report }),
+});
+
 export const markFailed = internalMutation({
   args: { analysisId: v.id("analyses"), error: v.string() },
   handler: async (ctx, { analysisId, error }) => ctx.db.patch(analysisId, {
@@ -68,9 +90,15 @@ export const runInference = action({
     fileName: v.string(),
     fileSize: v.number(),
     antibiotic: v.string(),
+    patient: patientValidator,
   },
   handler: async (ctx, args) => {
-    const analysisId = await ctx.runMutation(internal.analysis.createPending, args);
+    const { patient, ...analysisArgs } = args;
+    const patientRef = await ctx.runMutation(internal.patients.upsertPatient, patient);
+    const analysisId = await ctx.runMutation(internal.analysis.createPending, {
+      ...analysisArgs,
+      patientRef,
+    });
 
     try {
       const file = await ctx.storage.get(args.storageId);
