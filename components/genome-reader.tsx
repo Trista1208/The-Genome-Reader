@@ -232,8 +232,6 @@ function GenomeReader() {
                 </span>
               </label>
               <div className="sequence-metrics">
-                <span><b>BASES</b>{summary ? formatBases(summary.bases) : "—"}</span>
-                <span><b>CONTIGS</b>{summary?.contigs ?? "—"}</span>
                 <span><b>GC</b>{summary ? `${summary.gcContent.toFixed(1)}%` : "—"}</span>
               </div>
             </div>
