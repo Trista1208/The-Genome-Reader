@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — demo</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header style="padding-top:28px">
+    <div class="kicker">Hack-Nation Challenge 06 · E. coli · 5 drugs</div>
+    <h1>Genome <span class="t">Firewall</span></h1>
+    <div class="lede">
+      Per-antibiotic verdicts from a reconstructed genome —
+      <span class="mono amber">likely to fail</span> ·
+      <span class="mono teal">likely to work</span> ·
+      <span class="mono nc">no-call</span> —
+      with calibrated confidence as held-out frequencies, spectrum-confirmed
+      evidence, and a target-locus callability gate. The genome doesn't
+      replace the lab; it tells you which cases to rush and which antibiotic
+      not to start with.
+    </div>
+  </header>
+
+  <div class="banner"><b>Disclaimer.</b> Research prototype — all results
+  must be confirmed with standard laboratory susceptibility testing.</div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="report">Genome report</button>
+    <button class="tab-btn" data-tab="trust">Trust &amp; calibration</button>
+  </nav>
+
+  <!-- ============================ REPORT TAB ============================ -->
+  <section id="tab-report">
+    <div class="controls">
+      <div class="field">
+        <label for="picker">Genome (BV-BRC id)</label>
+        <input id="picker" list="genome-list" placeholder="562.…"
+               autocomplete="off" spellcheck="false">
+        <datalist id="genome-list"></datalist>
+      </div>
+      <div class="field">
+        <label>Curated stories</label>
+        <div id="story-btns" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div id="genome-out"><div class="loading">loading data…</div></div>
+  </section>
+
+  <!-- ============================ TRUST TAB ============================= -->
+  <section id="tab-trust" class="hidden">
+    <div class="controls">
+      <div class="field">
+        <label for="trust-drug">Drug</label>
+        <select id="trust-drug"></select>
+      </div>
+    </div>
+    <div id="trust-numbers"></div>
+    <div class="trust-grid">
+      <div class="trust-img"><img id="rel-img" alt="Reliability plot"></div>
+      <canvas id="cov-chart" class="chart" height="380"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="gate-title">How this model can mislead — and what we did about it</div>
+      <table class="vt tm">
+        <thead><tr><th>Failure mode</th><th>Failure story</th>
+        <th>Countermeasure (built, not promised)</th><th>Anchor</th></tr></thead>
+        <tbody>
+          <tr><td class="tm-name">Homolog leakage</td>
+            <td>Random splits put near-identical strains in train and test; the
+            model memorizes clones, not resistance biology, and collapses on
+            unseen lineages.</td>
+            <td>All splits are by skani cluster (99.5% ANI de-dup); every
+            reported number comes from genetically grouped splits, with the
+            held-out genetic group as the headline — never the
+            in-distribution one.</td>
+            <td class="small dim">Walsh et al. 2021 DOME, Nat Methods; Hicks
+            et al. 2019, PLoS Comput Biol</td></tr>
+          <tr><td class="tm-name">False confidence</td>
+            <td>A confidently wrong “likely to work” is the most dangerous
+            output; raw ML scores are miscalibrated and users over-trust
+            automated suggestions.</td>
+            <td>Platt calibration on a held-out split only; Brier score and
+            reliability curve published per drug; asymmetric conformal
+            no-call band (α susceptible-side 0.02) plus an ANI-distance hard
+            override; confidence is always shown as a bin-level frequency,
+            never a bare number.</td>
+            <td class="small dim">Van Calster et al. 2019, BMC Med; FDA CDS
+            guidance (automation bias)</td></tr>
+          <tr><td class="tm-name">Spurious correlation</td>
+            <td>The model latches onto lineage markers that correlate with
+            resistance in this sample but encode no mechanism (cf. Caruana's
+            pneumonia–asthma model).</td>
+            <td>Evidence is decoupled from the model: category (i) curated
+            determinant (AMRFinderPlus + allele-aware mapping), category (ii)
+            statistical association only, category (iii) no signal — shown
+            separately, so a mechanism-free prediction is visibly weaker.</td>
+            <td class="small dim">Caruana et al. 2015, KDD; Hicks et al. 2019
+            (r &gt; 0.98 confounding)</td></tr>
+          <tr><td class="tm-name">Absent-target false-susceptible</td>
+            <td>“No resistance gene found” reported as “susceptible”,
+            including when the drug's target locus was never actually
+            sequenced.</td>
+            <td>Locus callability gate: the quinolone target loci
+            (gyrA / parC / parE) must be verified present in the assembly
+            before a wild-type reading is trusted; not-called loci force
+            suspicion, never default-susceptible.</td>
+            <td class="small dim">BioFire K212727 labeling; Ellington et al.
+            2017 EUCAST WGS-AST report</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="trust-prov" class="prov"></div>
+  </section>
+
+  <div class="banner"><b>Disclaimer.</b> Research prototype — all results
+  must be confirmed with standard laboratory susceptibility testing.
+  <span class="dim">— No-call means “route to the lab”, not “alarm”.
+  Scope: prediction only; no sequence output, no clinical
+  recommendations.</span></div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
