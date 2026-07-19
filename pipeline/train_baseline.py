@@ -8,6 +8,18 @@ split-conformal no-call bands + ANI-distance hard override (pipeline.nocall,
 defaults), then the full CONTRACT evaluation seen vs heldout_group
 (pipeline.metrics.evaluate_all -> reports/metrics.json + reliability PNGs).
 
+Calibration-starvation fallback: Platt on a near-empty positive class is
+degenerate (v1 run: gentamicin had 1 R in calibration; the sigmoid collapsed
+all probabilities below 0.5 -> R-recall exactly 0 despite AUROC ~0.92-1.0).
+When the calibration split holds fewer than --min-cal-r resistant genomes,
+Platt is skipped and a calibration-free operating point is used instead:
+out-of-fold probabilities from GroupKFold (groups = ANI cluster) over the
+train split, threshold tau* = argmax balanced accuracy, applied as a fixed
+logit shift mapping tau* -> 0.5 (rank-preserving; probabilities are then
+NOT calibrated, only re-centered — documented in artifacts/summary).
+Conformal no-call bands are still fitted on the calibration split with the
+shifted probabilities (the shift is a fixed, train-only transform).
+
 Also computes the random-split-vs-grouped gap for --gap-drug: the same model
 trained on a stratified random row-wise 80/20 split vs the grouped protocol
 (demo statistic for why split discipline matters).
@@ -34,7 +46,12 @@ import numpy as np
 import pandas as pd
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import balanced_accuracy_score
+from sklearn.model_selection import (
+    GroupKFold,
+    cross_val_predict,
+    train_test_split,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -47,6 +64,8 @@ DRUGS = [
     "trimethoprim/sulfamethoxazole",
     "cefotaxime",
 ]
+
+DEFAULT_MIN_CAL_R = 5  # below this many R in calibration, Platt is degenerate
 
 
 def safe_name(drug: str) -> str:
@@ -74,6 +93,44 @@ def fit_with_convergence_check(model: Pipeline, X, y, drug: str) -> Pipeline:
             print(f"  WARNING [{drug}]: saga did not converge at max_iter="
                   f"{model.named_steps['lr'].max_iter}", file=sys.stderr)
     return model
+
+
+class ShiftedProba:
+    """Calibration-free operating point: fixed logit shift mapping tau* -> 0.5.
+
+    Wraps a fitted estimator; predict_proba returns sigmoid(logit(p) -
+    logit(tau*)). Rank-preserving, so AUROC/PR-AUC are unaffected; Brier is
+    NOT calibrated by construction (documented wherever this is used).
+    """
+
+    def __init__(self, model, tau: float):
+        self.model = model
+        self.tau = float(tau)
+
+    def predict_proba(self, X) -> np.ndarray:
+        p = np.clip(self.model.predict_proba(X)[:, 1], 1e-9, 1 - 1e-9)
+        z = np.log(p / (1 - p)) - np.log(self.tau / (1 - self.tau))
+        p1 = 1.0 / (1.0 + np.exp(-z))
+        return np.column_stack([1.0 - p1, p1])
+
+
+def grouped_cv_threshold(model, X_tr, y_tr, groups_tr, seed: int,
+                         n_splits: int = 5) -> float:
+    """tau* = argmax_t balanced_accuracy over grouped out-of-fold probs."""
+    n_splits = max(2, min(n_splits, len(set(groups_tr))))
+    cv = GroupKFold(n_splits=n_splits)
+    oof = cross_val_predict(make_model(seed), X_tr, y_tr, groups=groups_tr,
+                            cv=cv, method="predict_proba")[:, 1]
+    grid = np.unique(np.quantile(oof, np.linspace(0.01, 0.99, 99)))
+    yv = np.asarray(y_tr)
+    best_tau, best_ba = 0.5, -1.0
+    for t in grid:
+        ba = balanced_accuracy_score(yv, (oof >= t).astype(int))
+        if ba > best_ba:
+            best_ba, best_tau = ba, float(t)
+    print(f"  grouped-CV fallback: tau*={best_tau:.4f} "
+          f"(OOF bal_acc={best_ba:.3f}, {n_splits} folds)", file=sys.stderr)
+    return best_tau
 
 
 def nearest_train_distances(edges: pd.DataFrame, train_genomes: set[str],
@@ -143,6 +200,9 @@ def main(argv=None) -> int:
     ap.add_argument("--edges", default="splits/skani_edges.tsv")
     ap.add_argument("--drugs", default=",".join(DRUGS))
     ap.add_argument("--gap-drug", default="ciprofloxacin")
+    ap.add_argument("--min-cal-r", type=int, default=DEFAULT_MIN_CAL_R,
+                    help="min R genomes in calibration for Platt; below this, "
+                         "use the grouped-CV threshold fallback")
     ap.add_argument("--out-reports", default="reports")
     ap.add_argument("--out-models", default="models")
     ap.add_argument("--seed", type=int, default=0)
@@ -154,10 +214,13 @@ def main(argv=None) -> int:
     splits = splits_mod.load_splits(args.splits)
     edges = splits_mod.parse_skani_edges(args.edges)
     split_of = pd.Series({g: v["split"] for g, v in splits.items()})
+    cluster_of = {g: v["cluster_id"] for g, v in splits.items()}
     train_genomes = {g for g, v in splits.items() if v["split"] == "train"}
+    cl_sizes = pd.Series(cluster_of).value_counts()
     print(f"features: {fm.shape[0]} genomes x {fm.shape[1]} cols; "
           f"splits: {len(splits)} genomes "
           f"({split_of.value_counts().to_dict()})", file=sys.stderr)
+    print(f"top clusters (id:size): {cl_sizes.head(8).to_dict()}", file=sys.stderr)
 
     probabilities, labels_eval, masks = {}, {}, {}
     summary_rows = []
@@ -174,8 +237,11 @@ def main(argv=None) -> int:
         counts = {s: int((sp == s).sum()) for s in
                   ("train", "calibration", "test", "heldout_group")}
         r_counts = {s: int(((sp == s) & (y == 1)).sum()) for s in counts}
+        cl_s = pd.Series(cluster_of)
+        r_top = {int(c): int(y[cl_s[y.index] == c].sum())
+                 for c in cl_sizes.head(3).index}
         print(f"\n== {drug}: n={len(y)} (R={int(y.sum())}) per-split n={counts} "
-              f"R={r_counts}", file=sys.stderr)
+              f"R={r_counts} | R in top-3 clusters={r_top}", file=sys.stderr)
         if (sp == "calibration").sum() == 0 or y[sp == "calibration"].nunique() < 2:
             print(f"  SKIP {drug}: calibration split missing or single-class",
                   file=sys.stderr)
@@ -184,7 +250,18 @@ def main(argv=None) -> int:
         X_tr, y_tr = X[sp == "train"], y[sp == "train"]
         X_cal, y_cal = X[sp == "calibration"], y[sp == "calibration"]
         model = fit_with_convergence_check(make_model(args.seed), X_tr, y_tr, drug)
-        cal = calibrate.platt_calibrate(model, X_cal, y_cal)
+
+        if int(y_cal.sum()) >= args.min_cal_r:
+            cal_method, tau = "platt", None
+            cal = calibrate.platt_calibrate(model, X_cal, y_cal)
+        else:
+            cal_method = "grouped_cv_threshold"
+            tau = grouped_cv_threshold(
+                model, X_tr, y_tr, [cluster_of[g] for g in X_tr.index], args.seed)
+            cal = ShiftedProba(model, tau)
+            print(f"  FALLBACK [{drug}]: only {int(y_cal.sum())} R in calibration "
+                  f"-> grouped-CV threshold (no Platt); probabilities are "
+                  f"re-centered, not calibrated", file=sys.stderr)
 
         p_cal = cal.predict_proba(X_cal)[:, 1]
         bands = nocall.fit_conformal_bands(p_cal, y_cal.values)
@@ -205,14 +282,17 @@ def main(argv=None) -> int:
         with open(mdir / "baseline.pkl", "wb") as fh:
             pickle.dump({"model": model, "calibrated": cal,
                          "bands": bands.to_dict(), "drug": drug,
+                         "calibration_method": cal_method, "tau": tau,
                          "n_train": len(y_tr), "n_cal": len(y_cal)}, fh)
         bands.save(mdir / "nocall_bands.json")
         n_selected = int((model.named_steps["lr"].coef_[0] != 0).sum())
         print(f"  band=[{bands.band[0]:.3f},{bands.band[1]:.3f}] "
               f"dist_thr={bands.dist_threshold:.2f} selected={n_selected}/"
-              f"{X.shape[1]} features", file=sys.stderr)
+              f"{X.shape[1]} features cal={cal_method}", file=sys.stderr)
         summary_rows.append({"drug": drug, "n": len(y), "n_R": int(y.sum()),
                              **{f"n_{k}": v for k, v in counts.items()},
+                             **{f"nR_{k}": v for k, v in r_counts.items()},
+                             "calibration_method": cal_method, "tau": tau,
                              "n_features_selected": n_selected})
 
     if not probabilities:
