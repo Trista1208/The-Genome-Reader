@@ -23,3 +23,5 @@ reports/
 # --- sprint artifacts (large/regenerable) ---
 splits/skani_edges.tsv
 .tmp_sprint_genomes/
+splits/splits_run.log
+splits/skani_genomes.list
