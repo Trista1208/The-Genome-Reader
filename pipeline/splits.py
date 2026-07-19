@@ -241,7 +241,11 @@ def _stratified_group_assign(
     """
     from sklearn.model_selection import StratifiedGroupKFold
 
-    names = list(fracs)
+    # Sorted smallest-first so names[-1] is the largest split ("train"),
+    # which the peel loop below treats as the remainder (takes all leftover
+    # folds). A plain list(fracs) puts "test" last, which made the TEST
+    # split consume every fold and left train with ~0 genomes.
+    names = sorted(fracs, key=lambda n: fracs[n])
     labeled = strata.dropna()
     cl_of = pd.Series(clusters)
     labeled_clusters = cl_of[cl_of.index.isin(labeled.index)]
@@ -526,7 +530,10 @@ def main(argv=None) -> None:
     clusters = build_clusters(edges, genome_ids, args.ani, args.af)
     labels = None
     if args.labels:
-        ldf = pd.read_csv(args.labels)
+        # genome_id MUST stay string: ids like "562.100000" would otherwise be
+        # parsed as float64 and collapse (562.100000 -> 562.1), corrupting the
+        # genome_id->label join and creating duplicate index labels.
+        ldf = pd.read_csv(args.labels, dtype={"genome_id": str})
         labels = pd.Series(ldf["label"].values, index=ldf["genome_id"].astype(str))
     splits = assign_splits(clusters, labels, args.n_heldout, seed=args.seed)
     save_splits(splits, args.out)
