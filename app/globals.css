@@ -126,16 +126,8 @@ button { cursor: pointer; }
 }
 .reader-card::before { position: absolute; z-index: 8; top: -1px; right: 12%; left: 12%; height: 1px; content: ""; pointer-events: none; background: linear-gradient(90deg, transparent, #f5f5f0, transparent); opacity: .7; }
 
-.reader-card-header { display: grid; min-height: 86px; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 24px; border-bottom: 1px solid rgba(245,245,240,.14); }
-.reader-step { display: grid; width: 34px; height: 34px; place-items: center; border: 1px solid rgba(245,245,240,.38); border-radius: 50%; color: #f5f5f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; }
-.reader-card-header p { margin: 0 0 4px; color: rgba(245,245,240,.44); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 7px; letter-spacing: .17em; }
+.reader-card-header { display: flex; min-height: 86px; align-items: center; padding: 0 24px; border-bottom: 1px solid rgba(245,245,240,.14); }
 .reader-card-header h2 { margin: 0; color: #f5f5f0; font-family: var(--font-panchang), var(--font-switzer), sans-serif; font-size: 13px; font-weight: 540; letter-spacing: -.01em; }
-.reader-status { display: flex; align-items: center; gap: 7px; color: rgba(245,245,240,.42); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 7px; letter-spacing: .08em; text-transform: uppercase; }
-.reader-status i { width: 5px; height: 5px; border: 1px solid rgba(245,245,240,.38); border-radius: 50%; }
-.reader-status.status-ready { color: rgba(245,245,240,.88); }
-.reader-status.status-ready i { border-color: #f5f5f0; background: #f5f5f0; box-shadow: 0 0 10px rgba(245,245,240,.55); }
-.reader-status.status-error { color: #f5a06f; }
-.reader-status.status-error i { border-color: #f5a06f; background: #f5a06f; }
 
 .reader-card-body { display: grid; gap: 18px; padding: 24px; }
 .sequence-dropzone { position: relative; display: flex; min-height: 245px; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; padding: 28px 24px; border: 1px dashed rgba(245,245,240,.28); border-radius: 2px; background: radial-gradient(circle at 50% 32%, rgba(245,245,240,.065), transparent 45%), rgba(255,255,255,.018); text-align: center; transition: border-color .25s, background .25s, transform .25s; }
@@ -346,7 +338,6 @@ button { cursor: pointer; }
   .analysis-description { margin-top: 20px; font-size: 14px; }
   .analysis-specs { margin-top: 24px; }
   .reader-card-header { min-height: 76px; padding-inline: 16px; }
-  .reader-status { max-width: 92px; justify-content: flex-end; text-align: right; }
   .reader-card-body { padding: 16px; }
   .sequence-dropzone { min-height: 225px; padding-inline: 14px; }
   .reader-controls { grid-template-columns: 1fr; }

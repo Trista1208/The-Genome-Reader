@@ -143,8 +143,6 @@ function GenomeReader() {
     if (dropped) void acceptFile(dropped);
   };
 
-  const statusLabel = phase === "error" ? "Input error" : file ? "Ready to analyze" : "Awaiting sequence";
-
   return (
     <main className={`app-shell phase-shell-${phase}`}>
       <div className="split-shader-field" aria-hidden="true">
@@ -169,21 +167,14 @@ function GenomeReader() {
           <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
           <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
           <p className="analysis-description">Run an assembled bacterial genome through the response model to estimate whether the selected antibiotic is likely to work.</p>
-          <div className="analysis-specs" aria-label="Accepted input details">
-            <span><b>INPUT</b> .FA / .FASTA / .FNA</span>
-            <span><b>CHECK</b> LOCAL SEQUENCE VALIDATION</span>
-          </div>
         </div>
 
         <section className={`analysis-workspace workspace-input phase-${phase}`} aria-label="Genome analysis workspace">
         <article className="reader-card input-panel">
           <header className="reader-card-header">
-            <span className="reader-step">01</span>
             <div>
-              <p>SEQUENCE INPUT</p>
               <h2>Choose a genome file</h2>
             </div>
-            <span className={`reader-status status-${phase}`}><i />{statusLabel}</span>
           </header>
 
           <div className="reader-card-body">
