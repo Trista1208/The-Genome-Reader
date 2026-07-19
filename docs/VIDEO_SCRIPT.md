@@ -27,8 +27,8 @@ No narration edits needed beyond the table — record in one take.
 | # | Time | Screen | Narration (exact) |
 |---|---|---|---|
 | 1 | 0:00–0:12 | Refusal genome (curated #3) | "This genome made the naive caller confidently wrong — truth is resistant. Watch ours." *(click)* "No-call. On all five drugs. That's the feature, not the failure." |
-| 2 | 0:12–0:28 | Resistant genome (562.140931) | "Same move, resistant case: ciprofloxacin — likely to fail, and here's why: gyrA S83L, D87N, parC mutations. Named evidence, not a black box." |
-| 3 | 0:28–0:40 | Susceptible genome (562.100280) | "Susceptible case: likely to work — because the gate verified the drug's target locus was actually sequenced and intact." |
+| 2 | 0:12–0:28 | Resistant genome (562.135587) | "Same move, resistant case: ciprofloxacin — likely to fail, and here's why: gyrA S83L, D87N, parC mutations. Named evidence, not a black box." |
+| 3 | 0:28–0:40 | Susceptible genome (562.100171) | "Susceptible case: likely to work — because the gate verified the drug's target locus was actually sequenced and intact." |
 | 4 | 0:40–0:52 | Trust tab | "Held-out lineages only: 0.92 mean balanced accuracy, calibration curves, and the coverage chart — accuracy when it answers." |
 | 5 | 0:52–0:60 | Disclaimer footer | "Every screen says it: research prototype — confirm with standard laboratory susceptibility testing." |
 
