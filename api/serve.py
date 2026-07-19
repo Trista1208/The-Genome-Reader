@@ -26,7 +26,7 @@ app = FastAPI(title="Genome Firewall API", version="0.2.0",
 # --- load artifacts once at startup ---
 MODELS, BANDS = {}, {}
 for drug in DRUGS:
-    MODELS[drug] = pickle.load(open(ROOT / "models" / drug / "baseline.pkl", "rb"))["model"]
+    MODELS[drug] = pickle.load(open(ROOT / "models" / drug / "baseline.pkl", "rb"))["calibrated"]
     BANDS[drug] = json.load(open(ROOT / "models" / drug / "nocall_bands.json"))
 FM = pd.read_csv(ROOT / "features" / "feature_matrix.csv",
                  dtype={"genome_id": str}).set_index("genome_id")

@@ -23,7 +23,7 @@ metrics = json.loads((ROOT / "reports/metrics.json").read_text())
 
 models, bands = {}, {}
 for d in DRUGS:
-    models[d] = pickle.load(open(ROOT / "models" / d / "baseline.pkl", "rb"))["model"]
+    models[d] = pickle.load(open(ROOT / "models" / d / "baseline.pkl", "rb"))["calibrated"]
     bands[d] = json.load(open(ROOT / "models" / d / "nocall_bands.json"))["band"]
 
 # evidence hits per genome from its AMRFinderPlus TSV

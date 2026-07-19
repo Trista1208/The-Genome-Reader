@@ -24,7 +24,8 @@ def test_conformal_quantiles_exact(det_bands):
     assert det_bands.q_resistant == pytest.approx(0.19)
     assert det_bands.alpha_susceptible == 0.02 < det_bands.alpha_resistant == 0.10
     lo, hi = det_bands.band
-    assert (lo, hi) == (pytest.approx(0.81), pytest.approx(0.20))
+    # normalized (work_below, fail_above): gap geometry, no-call in between
+    assert (lo, hi) == (pytest.approx(0.20), pytest.approx(0.81))
 
 
 def test_mask_behavior(det_bands):
