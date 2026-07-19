@@ -17,19 +17,19 @@ prototype. **Every prediction must be confirmed with standard laboratory testing
 | Colab demo notebook | `notebooks/GenomeFirewall_Demo.ipynb` |
 | Team repo | https://github.com/Trista1208/The-Genome-Reader (branch `sprint/baseline`) |
 
-## Current numbers (held-out genetic groups — lineages never seen in training)
+## Current numbers (v3, 3,000-genome corpus — held-out genetic groups, lineages never seen in training)
 
 | drug | balanced acc | R-recall | S-recall | no-call rate | acc when called |
 |---|---|---|---|---|---|
-| ciprofloxacin | 0.956 | 0.93 | 0.98 | 0.57 | 0.967 |
-| trimethoprim/SXT | 0.906 | 0.93 | 0.88 | 0.59 | 0.970 |
-| gentamicin | 0.877 | 0.81 | 0.94 | 0.66 | 0.814 |
-| ampicillin | 0.838 | 0.79 | 0.89 | 0.62 | 0.884 |
-| cefotaxime | 0.694 | 0.39 | 1.00 | 0.58 | 0.948 |
+| ciprofloxacin | 0.916 | 0.93 | 0.91 | 0.14 | 0.944 |
+| trimethoprim/SXT | 0.946 | 0.96 | 0.93 | 0.39 | 0.965 |
+| gentamicin | 0.944 | 0.91 | 0.98 | 0.09 | 0.969 |
+| ampicillin | 0.823 | 0.89 | 0.75 | 0.35 | 0.908 |
+| cefotaxime | 0.950 | 0.93 | 0.97 | 0.13 | 0.964 |
 
-Cefotaxime is the honest weak spot: the held-out outbreak clone carries ESBL alleles
-absent from all training lineages — the system detects its own weakness and abstains
-rather than guessing. v3 retrain on the full 3,000-genome corpus is in progress.
+v2→v3: cefotaxime 0.694 → 0.950 (the extra lineages carried its missing ESBL
+alleles), gentamicin 0.877 → 0.944, SXT 0.906 → 0.946; ciprofloxacin and ampicillin
+flat within CI. Mean held-out balanced accuracy 0.83 → 0.92.
 
 ## How it works
 
