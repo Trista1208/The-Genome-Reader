@@ -336,15 +336,17 @@ function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
       </header>
 
       <section className="analysis-page is-output">
-        <div className="analysis-intro">
-          <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
-          <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
-          <p className="analysis-description">Run an assembled bacterial genome through the response model to estimate whether the selected antibiotic is likely to work.</p>
-          <div className="analysis-specs" aria-label="Analysis details">
-            <span><b>FILE</b> {pending.file.name}</span>
-            <span><b>TARGET</b> {pending.antibiotic}</span>
+        {phase !== "complete" ? (
+          <div className="analysis-intro">
+            <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
+            <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
+            <p className="analysis-description">Run an assembled bacterial genome through the response model to estimate whether the selected antibiotic is likely to work.</p>
+            <div className="analysis-specs" aria-label="Analysis details">
+              <span><b>FILE</b> {pending.file.name}</span>
+              <span><b>TARGET</b> {pending.antibiotic}</span>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <section className={`analysis-workspace workspace-output phase-${phase}`} aria-label="Genome model processing">
           <article className="reader-card output-panel">
