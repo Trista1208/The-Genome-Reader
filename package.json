@@ -12,6 +12,7 @@
     "convex:deploy": "convex deploy"
   },
   "dependencies": {
+    "@paper-design/shaders-react": "^0.0.77",
     "convex": "^1.42.3",
     "next": "^16.2.10",
     "react": "^19.2.7",

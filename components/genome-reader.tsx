@@ -13,6 +13,7 @@ import {
 } from "react";
 import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
 import { formatBases, makeDemoFasta, validateFasta, type FastaSummary } from "@/lib/fasta";
+import { LiquidTitle } from "@/components/liquid-title";
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
 
@@ -40,7 +41,7 @@ declare global {
 
 export function GenomeReaderApp({ convexEnabled }: { convexEnabled: boolean }) {
   if (convexEnabled) return <ConnectedGenomeReader />;
-  return <GenomeReader runInference={runDemoInference} mode="simulation" />;
+  return <GenomeReader runInference={runDemoInference} />;
 }
 
 function ConnectedGenomeReader() {
@@ -68,7 +69,7 @@ function ConnectedGenomeReader() {
     [generateUploadUrl, runModel],
   );
 
-  return <GenomeReader runInference={runInference} mode="connected" />;
+  return <GenomeReader runInference={runInference} />;
 }
 
 async function runDemoInference(
@@ -83,7 +84,7 @@ async function runDemoInference(
   return { ...DEMO_RESULT, sequenceLength: summary.bases, contigCount: summary.contigs };
 }
 
-function GenomeReader({ runInference, mode }: { runInference: RunInference; mode: "connected" | "simulation" }) {
+function GenomeReader({ runInference }: { runInference: RunInference }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [file, setFile] = useState<File | null>(null);
@@ -167,21 +168,8 @@ function GenomeReader({ runInference, mode }: { runInference: RunInference; mode
   return (
     <main className="app-shell">
       <div className="ambient-grid" aria-hidden="true" />
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="The Genome Reader home">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
-          <span className="brand-copy"><b>THE GENOME READER</b><small>ANTIBIOTIC RESPONSE INTELLIGENCE</small></span>
-        </a>
-        <div className="system-status">
-          <span className="status-dot" />
-          <span>{mode === "connected" ? "INFERENCE NODE ONLINE" : "LOCAL SIMULATION"}</span>
-          <span className="status-divider" />
-          <span>GFR / 01</span>
-        </div>
-      </header>
-
       <section className="hero" id="top">
-        <h1>ANTIBIOTIC CHECK</h1>
+        <LiquidTitle />
       </section>
 
       <section className={`analysis-workspace phase-${phase}`} aria-label="Genome analysis workspace">
