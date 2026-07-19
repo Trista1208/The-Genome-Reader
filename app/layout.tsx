@@ -16,7 +16,7 @@ const panchang = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "The Genome Reader — Antibiotic Response Intelligence",
+  title: "Breakpoint — Antibiotic Response Intelligence",
   description:
     "Research decision support for estimating antibiotic response from an assembled bacterial genome.",
 };

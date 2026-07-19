@@ -1,5 +1,5 @@
-import { AsciiLanding } from "@/components/ascii-landing";
+import { LandingPage } from "@/components/landing-page";
 
 export default function Home() {
-  return <AsciiLanding />;
+  return <LandingPage />;
 }

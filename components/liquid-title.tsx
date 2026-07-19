@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import LiquidMetal from "@/components/ui/liquid-metal";
 
-const TITLE = "ANTIBIOTIC CHECK";
+const TITLE = "BREAKPOINT";
 
 export function LiquidTitle() {
   const [mask, setMask] = useState("");
