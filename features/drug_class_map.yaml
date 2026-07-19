@@ -1,0 +1,482 @@
+# drug_class_map.yaml — drug -> AMRFinderPlus-hit mapping for evidence category (i)
+# "spectrum-confirmed known resistance" (CONTRACT.md, features/ section).
+#
+# Species scope: Escherichia coli (taxon 562), AMRFinderPlus v4 output
+# (headers: Element symbol, Element name, Scope, Type, Subtype, Class, Subclass,
+# Method, ...). Curation date: 2026-07-19.
+#
+# HOW A HIT MATCHES A DRUG
+#   A hit matches a drug if it matches ANY of the drug's `rules` AND does not
+#   match the drug-level `exclude_symbol_regex`. Within one rule, all given
+#   match fields are ANDed:
+#     symbol_regex   — regex on "Element symbol" (e.g. blaCTX-M-15, gyrA_S83L)
+#     class_regex    — regex on "Class" (e.g. BETA-LACTAM, AMINOGLYCOSIDE/QUINOLONE)
+#     subclass_regex — regex on "Subclass" (slash-joined drug list or class echo)
+#     subtype        — AMR (acquired gene) | POINT (curated point mutation;
+#                      also matches subtype POINT_DISRUPT)
+#   Rules are ORed. `confidence: confirmed` = both the AMRFinderPlus curation
+#   and the ResFinder/PointFinder phenotype panels agree (or one source
+#   explicitly documents it); `confidence: review` = sources disagree or the
+#   evidence is indirect — reported but flagged, never silently counted.
+#
+# TIER (computed from Method/Subtype, independent of drug):
+#   point      — Subtype POINT/POINT_DISRUPT or Method POINT*  (curated mutation)
+#   full_gene  — Method EXACT*/ALLELE* (identical to reference) or BLAST*
+#                (>90% coverage, <100% identity = putative novel allele)
+#   degraded   — Method PARTIAL*/PARTIAL_CONTIG_END*/INTERNAL_STOP*/HMM*
+# Tier semantics per AMRFinderPlus wiki "Interpreting results" and "Methods"
+# (source amrfp_interpreting / amrfp_methods below): quality order
+# ALLELE > EXACT > BLAST > INTERNAL_STOP > PARTIAL_CONTIG_END > PARTIAL > HMM.
+#
+# KEY SUBCLASS SEMANTICS (amrfp_interpreting, quoted):
+#   "'Subclass' contains a more specific drug designations where known...
+#   'CEPHALOSPORIN' is equivalent to the Lahey 2be definition; 'CARBAPENEM'
+#   means the protein has carbapenemase activity, but it might or might not
+#   confer resistance to other beta-lactams; ... Where the phenotypic
+#   information is incomplete, contradictory, or unclear, the 'Class' value is
+#   used for the 'Subclass' value."
+# => CEPHALOSPORIN subclass is AMRFinderPlus's per-allele ESBL/AmpC call and is
+#    what lets blaTEM-1 (subclass BETA-LACTAM = narrow) NOT map to cefotaxime
+#    while blaTEM-68 (subclass CEPHALOSPORIN, an ESBL allele) does.
+# => CARBAPENEM subclass alone does NOT imply 3GC resistance, so carbapenemases
+#    are added to cefotaxime/ceftazidime only via explicit family lists that
+#    the ResFinder panel documents as cefotaxime+ceftazidime active
+#    (KPC/NDM/VIM/IMP yes; OXA-48-like NO — see notes under cefotaxime).
+
+sources:
+  resfinder_phenotypes:
+    title: "ResFinder database phenotypes.txt (genotype->phenotype panel)"
+    url: "https://bitbucket.org/genomicepidemiology/resfinder_db/raw/master/phenotypes.txt"
+    accessed: 2026-07-19
+    cite: "Bortolaia et al. 2020, ResFinder 4.0, JAC doi:10.1093/jac/dkaa389; Florensa et al. 2022, JAC (PMC8914360)"
+  pointfinder_ecoli:
+    title: "PointFinder database E. coli resistance-mutation panel (resistens-overview.txt)"
+    url: "https://bitbucket.org/genomicepidemiology/pointfinder_db/raw/master/escherichia_coli/resistens-overview.txt"
+    accessed: 2026-07-19
+    cite: "Zankari et al. 2017, PointFinder, JAC doi:10.1093/jac/dkx217"
+  amrfp_catalog:
+    title: "AMRFinderPlus ReferenceGeneCatalog.txt, database version 2026-05-15.1"
+    url: "https://ftp.ncbi.nlm.nih.gov/pathogen/Antimicrobial_resistance/AMRFinderPlus/database/latest/ReferenceGeneCatalog.txt"
+    accessed: 2026-07-19
+    cite: "Feldgarden et al. 2021, Sci Rep 11:12728, PMID 34135355"
+  amrfp_interpreting:
+    title: "AMRFinderPlus wiki: Interpreting results (Method/Class/Subclass semantics)"
+    url: "https://github.com/ncbi/amr/wiki/Interpreting-results"
+    accessed: 2026-07-19
+  amrfp_methods:
+    title: "AMRFinderPlus wiki: Methods (hit-quality ordering, point-mutation detection)"
+    url: "https://github.com/ncbi/amr/wiki/Methods"
+    accessed: 2026-07-19
+
+drugs:
+
+  # ------------------------------------------------------------------ CIP
+  ciprofloxacin:
+    aliases: [ciprofloxacin, cip]
+    rules:
+      - name: qrdr_point_mutations
+        match:
+          subtype: POINT
+          symbol_regex: '^(gyrA|gyrB|parC|parE)_'
+          class_regex: '^QUINOLONE'
+        confidence: confirmed
+        sources: [pointfinder_ecoli, amrfp_catalog]
+        note: >-
+          Quinolone resistance-determining region substitutions. PointFinder
+          E. coli panel maps gyrA G81/D82/S83/A84/Q106/A196, gyrB D426/K447,
+          parC A56/S57/F60/G78/S80/E84 and parE 11 positions (incl. I529L) to
+          Ciprofloxacin; AMRFinderPlus curates the same loci with
+          Class/Subclass QUINOLONE for --organism Escherichia.
+      - name: qnr_genes
+        match:
+          subtype: AMR
+          symbol_regex: '^qnr'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          All qnr families in the ResFinder panel (qnrA/qnrB/qnrC/qnrD/qnrE/
+          qnrS/qnrVC) map to Ciprofloxacin. PMQR: typically low-level
+          resistance — sufficient for category (i) presence-of-determinant
+          evidence, noted in the report layer.
+      - name: qepA_efflux
+        match:
+          subtype: AMR
+          symbol_regex: '^qepA'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: qepA1-4 -> Ciprofloxacin in the ResFinder panel (plasmidic efflux).
+      - name: aac6_Ib_cr
+        match:
+          subtype: AMR
+          symbol_regex: "^aac\\(6'\\)-Ib-cr"
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          Bifunctional variant acetylating ciprofloxacin. ResFinder row
+          aac(6')-Ib-cr_2 (PMID 17938184) -> Ciprofloxacin; panel caveat (PMID
+          16369542): ciprofloxacin MIC does not always cross ECOFF. AMRFinderPlus
+          subclass AMIKACIN/KANAMYCIN/QUINOLONE/TOBRAMYCIN — note: NOT
+          gentamicin-active, see gentamicin section.
+      - name: oqxab_efflux
+        match:
+          subtype: AMR
+          symbol_regex: '^oqx(A|B)'
+        confidence: review
+        sources: [amrfp_catalog]
+        note: >-
+          AMRFinderPlus tags oqxA/oqxB Subclass PHENICOL/QUINOLONE
+          (RND efflux, low-level FQ resistance), but oqxAB is absent from the
+          ResFinder phenotype panel -> flagged review, not silently confirmed.
+      - name: efflux_regulator_points
+        match:
+          subtype: POINT
+          symbol_regex: '^(marR|soxR|soxS|acrR)_'
+        confidence: review
+        sources: [amrfp_catalog]
+        note: >-
+          AMRFinderPlus curates marR/soxR/soxS/acrR substitutions for
+          Escherichia with MULTIDRUG subclass incl. QUINOLONE/FLUOROQUINOLONE
+          (AcrAB-TolC upregulation). Pleiotropic, low-level — review tier.
+    blind_spots: >-
+      PMQR genes give low-level resistance; AcrAB-TolC overexpression beyond
+      the curated regulator points (e.g. novel marR alleles) is invisible;
+      point-mutation calls only fire with --organism Escherichia and only for
+      curated substitutions (absence of a POINT row != wild type — feeds the
+      callability gate).
+
+  # ------------------------------------------------------------------ GEN
+  gentamicin:
+    aliases: [gentamicin, gen, gent]
+    rules:
+      - name: ame_gentamicin_subclass
+        match:
+          subtype: AMR
+          class_regex: 'AMINOGLYCOSIDE'
+          subclass_regex: 'GENTAMICIN'
+        confidence: confirmed
+        sources: [amrfp_catalog, resfinder_phenotypes]
+        note: >-
+          AMRFinderPlus per-allele substrate curation: Subclass contains
+          GENTAMICIN. Cross-validated against the ResFinder panel, which maps
+          to Gentamicin: aac(3)-I*/II*/III*/IV*/VIa (PMIDs e.g. 2552900,
+          1649572, 6318050), ant(2'')-Ia (=aadB, PMID 3024112), aac(6')-II
+          family (PMIDs 8239603, 2515793), aac(6')-Ib gentamicin-active
+          alleles only (e.g. Ib11 PMID 12543680), aph(2'') family (PMID
+          19074389), bifunctional aac(6')-Ie/aph(2'') (PMID 3015884), armA
+          (PMID 12878520). Canonical aac(6')-Ib is deliberately NOT
+          gentamicin-tagged (tobramycin/amikacin only, ResFinder PMID
+          2841303) — substrate-aware as required.
+      - name: rmt_npm_16S_methyltransferases
+        match:
+          subtype: AMR
+          symbol_regex: '^(rmt[A-Z]|npmA)'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          16S R1405/G1405 methyltransferases rmtA-H and npmA confer high-level
+          pan-aminoglycoside resistance incl. Gentamicin per ResFinder panel
+          (PMIDs 14742200 rmtB, 17875999 npmA). AMRFinderPlus gives these only
+          the generic Subclass AMINOGLYCOSIDE, so they need this symbol rule
+          (armA is already GENTAMICIN-tagged and caught by the rule above).
+      - name: aph3_II_VI_gentamicin
+        match:
+          subtype: AMR
+          symbol_regex: "^aph\\(3'\\)-(IIa|IIb|VIa|VIb)$"
+        confidence: review
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          CONFLICT: ResFinder panel lists Gentamicin for aph(3')-IIa/IIb
+          (PMIDs 1664906, 8723476) and aph(3')-VIa/VIb (PMIDs 2846986,
+          16048938); AMRFinderPlus 2026-05-15.1 tags these KANAMYCIN or
+          AMIKACIN/KANAMYCIN (no gentamicin). Old-literature activity claims;
+          flagged review rather than confirmed.
+      - name: aac3_rare_environmental
+        match:
+          subtype: AMR
+          symbol_regex: "^aac\\(3\\)-(IXa|VIIa|VIIIa|Xa)$"
+        confidence: review
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          CONFLICT as above: ResFinder lists Gentamicin (PMIDs 2060791,
+          2914849), AMRFinderPlus tags generic AMINOGLYCOSIDE. Environmental/
+          Streptomyces-associated, essentially absent from E. coli.
+    blind_spots: >-
+      16S rRNA target mutations (e.g. rrs 1406/1408) are not in AMRFinderPlus's
+      E. coli curated point set (they are in PointFinder only); novel AME
+      alleles below BLAST identity cutoffs; porin/ uptake defects are not
+      genomically visible.
+
+  # ------------------------------------------------------------------ AMP
+  ampicillin:
+    aliases: [ampicillin, amp, amoxicillin]
+    rules:
+      - name: any_acquired_betalactamase
+        match:
+          subtype: AMR
+          class_regex: '^BETA-LACTAM$'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          Every E.-coli-relevant beta-lactamase family hydrolyzes ampicillin:
+          ResFinder panel rows for narrow blaTEM-1A/blaSHV-1 (Ampicillin),
+          blaCTX-M-1, blaCMY-1, blaKPC-2, blaNDM-1, blaVIM-1, blaIMP-1,
+          blaOXA-48, blaOXA-1 all list Ampicillin/Amoxicillin. Family-level
+          rule is spectrum-correct for ampicillin even when allele subclass
+          is narrow (subclass BETA-LACTAM).
+    exclude_symbol_regex: '^(blaEC|blaOXA-(53|74)$)'
+    exclude_note: >-
+      blaEC = intrinsic chromosomal class-C gene of E. coli; basal expression
+      does not confer ampicillin (or 3GC) resistance — AMRFinderPlus files it
+      under scope "plus" ("presence/absence unlikely to affect phenotype",
+      amrfp_interpreting). Its presence in every E. coli genome would
+      otherwise make every isolate "ampicillin-resistant". blaOXA-53/blaOXA-74
+      excluded per ResFinder panel: ceftazidime(/cefepime)-only phenotypes,
+      no ampicillin.
+    blind_spots: >-
+      ftsI (PBP3) substitutions raise ampicillin MICs modestly and are not
+      counted here; porin loss alone rarely crosses the ampicillin breakpoint.
+      Coverage of the acquired-enzyme mechanism is effectively complete.
+
+  # ------------------------------------------------------------------ CTX
+  cefotaxime:
+    aliases: [cefotaxime, ctx]
+    rules:
+      - name: ctxm_esbl
+        match:
+          subtype: AMR
+          symbol_regex: '^blaCTX-M-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          ResFinder blaCTX-M-1 row: Cefotaxime, Ceftazidime, Ceftriaxone,
+          Cefepime. AMRFinderPlus Subclass CEPHALOSPORIN (Lahey 2be).
+      - name: acquired_ampc
+        match:
+          subtype: AMR
+          symbol_regex: '^bla(CMY|DHA|ACC|ACT|MIR|MOX|FOX|LAT|CMH)-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          Plasmidic AmpC. ResFinder blaCMY-1 row: Cefotaxime, Ceftazidime,
+          Cefoxitin (no carbapenems). AMRFinderPlus Subclass CEPHALOSPORIN.
+      - name: carbapenemase_with_3gc_activity
+        match:
+          subtype: AMR
+          symbol_regex: '^bla(KPC|NDM|VIM|IMP)-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          ResFinder rows blaKPC-2, blaNDM-1, blaVIM-1, blaIMP-1 all list
+          Cefotaxime AND Ceftazidime in addition to carbapenems. Explicitly
+          excludes OXA-48-like, whose ResFinder row lists carbapenems but NO
+          cephalosporins (weak 3GC activity).
+      - name: esbl_cephalosporinase_subclass
+        match:
+          subtype: AMR
+          class_regex: '^BETA-LACTAM$'
+          subclass_regex: 'CEPHALOSPORIN'
+        confidence: confirmed
+        sources: [amrfp_catalog, resfinder_phenotypes, amrfp_interpreting]
+        note: >-
+          Allele-aware catch-all: AMRFinderPlus Subclass CEPHALOSPORIN = Lahey
+          2be extended-spectrum phenotype. Catches ESBL alleles of narrow-
+          spectrum families (e.g. blaTEM-68, blaSHV-12 — both CEPHALOSPORIN in
+          the catalog; ResFinder blaTEM-68 lists Cefotaxime+Ceftazidime) and
+          GES/PER/VEB/BEL/TLA/SFO families. Narrow blaTEM-1/blaSHV-1 (Subclass
+          BETA-LACTAM) correctly do NOT match.
+      - name: oxa_cephalosporin_subclass
+        match:
+          subtype: AMR
+          symbol_regex: '^blaOXA-'
+          subclass_regex: 'CEPHALOSPORIN'
+        confidence: review
+        sources: [amrfp_catalog, resfinder_phenotypes]
+        note: >-
+          CONFLICT: AMRFinderPlus tags common blaOXA-1/blaOXA-10 CEPHALOSPORIN,
+          but their ResFinder rows list no cefotaxime/ceftazidime (only
+          cefepime); other OXA alleles (2,13,16,17,18,28,45) do list them.
+          Heterogeneous family — review until resolved per-allele (CARD ARO
+          cross-check suggested). OXA-48-like (Subclass CARBAPENEM, no 3GC
+          activity per ResFinder) correctly does NOT match.
+      - name: ampC_regulatory_points
+        match:
+          subtype: POINT
+          symbol_regex: '^ampC_'
+        confidence: confirmed
+        sources: [amrfp_catalog, pointfinder_ecoli]
+        note: >-
+          Chromosomal ampC promoter/attenuator substitutions curated by
+          AMRFinderPlus (ampC | CEPHALOSPORIN) and PointFinder
+          (ampC_promoter -42/-32/indels -> cefotaxime, ceftazidime) =
+          hyperexpression of the intrinsic blaEC/ampC.
+      - name: ftsI_pbp3_points
+        match:
+          subtype: POINT
+          symbol_regex: '^ftsI_'
+        confidence: review
+        sources: [amrfp_catalog]
+        note: >-
+          AMRFinderPlus curates Escherichia ftsI (PBP3) substitutions with
+          Subclass CEPHALOSPORIN; phenotype magnitude in E. coli is
+          variable — review.
+    exclude_symbol_regex: '^blaEC'
+    exclude_note: >-
+      blaEC gene presence alone (basal intrinsic copy, scope "plus") does not
+      confer 3GC resistance; only its curated regulatory POINT mutations
+      count (rule ampC_regulatory_points). Without this exclusion every
+      E. coli would be flagged cefotaxime-resistant.
+    blind_spots: >-
+      ampC hyperexpression via novel promoter mutations or insertion sequences
+      not in the curated point set; ESBL + porin-loss combinations (porin side
+      invisible unless a curated omp point fires); novel ESBL alleles called
+      only at family level (Subclass may fall back to BETA-LACTAM when
+      phenotype is uncurated, amrfp_interpreting).
+
+  # ------------------------------------------------------------------ CAZ
+  ceftazidime:
+    aliases: [ceftazidime, caz]
+    rules:
+      - name: ctxm_esbl
+        match:
+          subtype: AMR
+          symbol_regex: '^blaCTX-M-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          ResFinder blaCTX-M-1 row includes Ceftazidime. Caveat: CTX-M enzymes
+          prefer cefotaxime; ceftazidime MICs vary by allele (documented in
+          the report layer, mapping unchanged).
+      - name: acquired_ampc
+        match:
+          subtype: AMR
+          symbol_regex: '^bla(CMY|DHA|ACC|ACT|MIR|MOX|FOX|LAT|CMH)-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: ResFinder blaCMY-1 row includes Ceftazidime.
+      - name: carbapenemase_with_3gc_activity
+        match:
+          subtype: AMR
+          symbol_regex: '^bla(KPC|NDM|VIM|IMP)-'
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          ResFinder blaKPC-2/blaNDM-1/blaVIM-1/blaIMP-1 rows list Ceftazidime.
+          OXA-48-like excluded (no cephalosporins in its ResFinder row).
+      - name: esbl_cephalosporinase_subclass
+        match:
+          subtype: AMR
+          class_regex: '^BETA-LACTAM$'
+          subclass_regex: 'CEPHALOSPORIN'
+        confidence: confirmed
+        sources: [amrfp_catalog, resfinder_phenotypes, amrfp_interpreting]
+        note: See cefotaxime — allele-aware Lahey 2be catch-all.
+      - name: oxa_cephalosporin_subclass
+        match:
+          subtype: AMR
+          symbol_regex: '^blaOXA-'
+          subclass_regex: 'CEPHALOSPORIN'
+        confidence: review
+        sources: [amrfp_catalog, resfinder_phenotypes]
+        note: See cefotaxime — OXA family heterogeneous, review.
+      - name: ampC_regulatory_points
+        match:
+          subtype: POINT
+          symbol_regex: '^ampC_'
+        confidence: confirmed
+        sources: [amrfp_catalog, pointfinder_ecoli]
+        note: See cefotaxime — PointFinder ampC promoter rows list ceftazidime.
+      - name: ftsI_pbp3_points
+        match:
+          subtype: POINT
+          symbol_regex: '^ftsI_'
+        confidence: review
+        sources: [amrfp_catalog]
+        note: See cefotaxime.
+    exclude_symbol_regex: '^blaEC'
+    exclude_note: See cefotaxime.
+    blind_spots: See cefotaxime — same mechanism landscape; additionally
+      CTX-M alleles differ in ceftazidime activity (cefotaximase bias), so a
+      CTX-M hit is stronger evidence for cefotaxime than for ceftazidime.
+
+  # ------------------------------------------------------------------ MEM
+  meropenem:
+    aliases: [meropenem, mem]
+    rules:
+      - name: carbapenemase_subclass
+        match:
+          subtype: AMR
+          class_regex: '^BETA-LACTAM$'
+          subclass_regex: 'CARBAPENEM'
+        confidence: confirmed
+        sources: [amrfp_catalog, resfinder_phenotypes, amrfp_interpreting]
+        note: >-
+          AMRFinderPlus Subclass CARBAPENEM = "the protein has carbapenemase
+          activity" (amrfp_interpreting). Covers KPC, NDM, VIM, IMP,
+          OXA-48-like, carbapenemase GES variants, IMI etc. Cross-validated:
+          ResFinder rows blaKPC-2/blaNDM-1/blaVIM-1/blaIMP-1/blaOXA-48 all
+          list Meropenem (OXA-48 included here — carbapenem-active even though
+          3GC-weak, see cefotaxime).
+      - name: porin_loss_points
+        match:
+          subtype: POINT
+          symbol_regex: '^(ompC|ompF|ompR)_'
+        confidence: review
+        sources: [amrfp_catalog]
+        note: >-
+          AMRFinderPlus curates Escherichia ompC/ompF (and regulator ompR)
+          substitutions with Subclass CARBAPENEM. Porin loss alone usually
+          raises carbapenem MICs without crossing the meropenem breakpoint;
+          clinically relevant mainly combined with ESBL/AmpC/carbapenemase —
+          review, not standalone confirmation.
+    blind_spots: >-
+      Porin loss without a curated point call (truncations seen only as
+      PARTIAL/INTERNAL_STOP omp hits, which AMRFinderPlus does not drug-tag);
+      efflux upregulation; OXA-48 producers with weak expression can test
+      meropenem-borderline despite the confirmed genotype.
+
+  # ------------------------------------------------------------------ SXT
+  trimethoprim-sulfamethoxazole:
+    aliases: [trimethoprim-sulfamethoxazole, sxt, co-trimoxazole, tmp-smx]
+    component_drug: true
+    rules:
+      - name: dfr_trimethoprim
+        match:
+          subtype: AMR
+          subclass_regex: '^TRIMETHOPRIM$'
+        component: trimethoprim
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          All 90 dfrA alleles in the ResFinder panel map to Trimethoprim;
+          subclass rule also catches dfrB. (e.g. dfrA17 in smoke TSV.)
+      - name: sul_sulfonamide
+        match:
+          subtype: AMR
+          subclass_regex: '^SULFONAMIDE$'
+        component: sulfamethoxazole
+        confidence: confirmed
+        sources: [resfinder_phenotypes, amrfp_catalog]
+        note: >-
+          ResFinder sul1/sul2/sul3/sul4 rows all map to Sulfamethoxazole.
+          (e.g. sul1 in smoke TSV.)
+      - name: folP_points
+        match:
+          subtype: POINT
+          symbol_regex: '^folP_'
+        component: sulfamethoxazole
+        confidence: confirmed
+        sources: [pointfinder_ecoli, amrfp_catalog]
+        note: >-
+          DHPS target substitutions: PointFinder folP F28L/I and P64S ->
+          Sulfamethoxazole; AMRFinderPlus curates folP | SULFONAMIDE for
+          Escherichia.
+    note: >-
+      SXT is a combination agent; a determinant for EITHER component is
+      reported as SXT evidence with its `component` label (resistance to one
+      component generally compromises the combination clinically). Reports
+      should surface which component(s) are covered.
+    blind_spots: >-
+      folA (DHFR target of trimethoprim) promoter-up / coding mutations are in
+      NEITHER the PointFinder E. coli panel NOR AMRFinderPlus's Escherichia
+      point set — a real trimethoprim blind spot; efflux-mediated
+      co-resistance not visible.
