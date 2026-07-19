@@ -20,6 +20,16 @@ NOT calibrated, only re-centered — documented in artifacts/summary).
 Conformal no-call bands are still fitted on the calibration split with the
 shifted probabilities (the shift is a fixed, train-only transform).
 
+Target-locus callability gate (pipeline.target_gate): a "likely to work"
+call may never rest solely on "no resistance marker found". Post-hoc, per
+drug: curated point-mutation loci (ciprofloxacin: gyrA/parC/parE) must be
+callable (AMRFinderPlus row at the locus, or the locus k-mer-verified in
+the assembly); drugs without curated loci get an assembly-QC gate and are
+labeled absence-of-evidence. Non-callable flips "likely to work" to
+no-call ("target locus not callable"); flips are counted per drug
+(train_summary.json "gate_flips") and per-genome statuses go to
+demo/data/gate_status.json. Deterministic layer; probabilities unchanged.
+
 Also computes the random-split-vs-grouped gap for --gap-drug: the same model
 trained on a stratified random row-wise 80/20 split vs the grouped protocol
 (demo statistic for why split discipline matters).
@@ -55,7 +65,7 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from pipeline import calibrate, metrics, nocall, splits as splits_mod
+from pipeline import calibrate, metrics, nocall, splits as splits_mod, target_gate
 
 DRUGS = [
     "ciprofloxacin",
@@ -206,6 +216,14 @@ def main(argv=None) -> int:
     ap.add_argument("--out-reports", default="reports")
     ap.add_argument("--out-models", default="models")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--no-gate", action="store_true",
+                    help="disable the target-locus callability gate")
+    ap.add_argument("--gate-tsv-dir", default="features/amrfinder")
+    ap.add_argument("--gate-fna-dir", default="data/genomes")
+    ap.add_argument("--gate-mutall-dir", default="features/amrfinder_mutall",
+                    help="optional --mutation_all TSVs (used if dir exists)")
+    ap.add_argument("--gate-demo-out", default="demo/data/gate_status.json",
+                    help="gate panel JSON for the demo; '' skips writing")
     args = ap.parse_args(argv)
     drugs = args.drugs.split(",")
 
@@ -225,6 +243,11 @@ def main(argv=None) -> int:
     probabilities, labels_eval, masks = {}, {}, {}
     summary_rows = []
     gap_result = None
+    gate = None
+    if not args.no_gate:
+        gate = target_gate.Gate(args.gate_tsv_dir, args.gate_fna_dir,
+                                args.gate_mutall_dir)
+    gate_report: dict[str, dict[str, dict]] = {}
     for drug in drugs:
         lab = labels_all[labels_all["antibiotic"] == drug]
         y = pd.Series(lab["label"].astype(int).values,
@@ -273,6 +296,20 @@ def main(argv=None) -> int:
         d_all = np.array([dist[g] for g in genomes])
         mask = nocall.apply_nocall(p_all, bands, d_all)
 
+        # target-locus callability gate: post-hoc override on "likely to
+        # work" calls only (synthesis v2 change 4; never a silent pass).
+        n_gate_flips = 0
+        if gate is not None:
+            statuses = {g: gate.gate_status(g, drug) for g in genomes}
+            mask, n_gate_flips = target_gate.apply_gate_override(
+                p_all, bands, mask, [statuses[g]["status"] for g in genomes])
+            gate_report[drug] = statuses
+            st_counts = pd.Series([s["status"] for s in statuses.values()]
+                                  ).value_counts().to_dict()
+            print(f"  gate [{drug}]: {n_gate_flips} 'likely to work' call(s) "
+                  f"flipped to no-call ({target_gate.NO_CALL_REASON}); "
+                  f"statuses={st_counts}", file=sys.stderr)
+
         probabilities[drug] = dict(zip(genomes, p_all))
         labels_eval[drug] = dict(zip(genomes, y.values.astype(float)))
         masks[drug] = dict(zip(genomes, mask.astype(bool)))
@@ -293,7 +330,8 @@ def main(argv=None) -> int:
                              **{f"n_{k}": v for k, v in counts.items()},
                              **{f"nR_{k}": v for k, v in r_counts.items()},
                              "calibration_method": cal_method, "tau": tau,
-                             "n_features_selected": n_selected})
+                             "n_features_selected": n_selected,
+                             "gate_flips": n_gate_flips})
 
     if not probabilities:
         print("no drugs evaluated", file=sys.stderr)
@@ -303,6 +341,11 @@ def main(argv=None) -> int:
         probabilities, labels_eval, splits, masks, out_dir=args.out_reports)
     (Path(args.out_reports) / "train_summary.json").write_text(
         json.dumps(summary_rows, indent=1) + "\n")
+
+    if gate is not None and args.gate_demo_out:
+        target_gate.write_gate_json(gate_report, args.gate_demo_out)
+        print(f"gate status -> {args.gate_demo_out} "
+              f"({len(gate_report)} drugs)", file=sys.stderr)
 
     if args.gap_drug in drugs:
         lab = labels_all[labels_all["antibiotic"] == args.gap_drug]

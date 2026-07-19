@@ -41,6 +41,30 @@ or `export SKANI_BIN=/path/to/skani`.
   accuracy, recall R/S, F1, AUROC, PR-AUC, Brier, no-call rate,
   accuracy-after-no-call, risk-coverage data, reliability data, per-group
   (seen vs heldout_group) breakdown, bootstrap-over-CLUSTERS 95% CIs.
+- `target_gate.py` — target-locus callability / WT-intactness gate. A
+  "likely to work" call may never rest solely on "no resistance marker
+  found" (challenge-brief requirement). Key file fact: the production batch
+  TSVs (`amrfinder -O Escherichia --plus`) report only FOUND resistance
+  mutations, so a missing locus row cannot distinguish screened-WT from
+  not-screened; `--mutation_all` adds one row per screened curated position
+  tagged [WILDTYPE]/[UNKNOWN] (verified 2026-07-19 on 562.100000:
+  data/mutall_check.tsv has 310 rows vs 36 in the batch TSV). The corpus
+  was re-screened with `--mutation_all` into `features/amrfinder_mutall/`
+  (same pinned image, regenerable: one `amrfinder -O Escherichia --plus
+  --mutation_all out.tsv` per genome, ~14 s each). Gate per (genome, drug):
+  curated-locus drugs (ciprofloxacin: gyrA/parC/parE) pass iff every locus
+  has a row (curated mutation / WT / unknown-variant) in the batch or
+  --mutation_all TSV — a locus absent from a --mutation_all TSV is
+  genuinely not-called; a spaced-31-mer locus check (>=0.75 found,
+  parameters mirror demo/build_cache.py) is the fallback only when no
+  --mutation_all TSV exists. Drugs without curated loci (gentamicin,
+  ampicillin, SXT, cefotaxime) get assembly QC from the .fna (4-6 Mb, <=500
+  contigs) and are labeled `absence_of_evidence`. `not_callable` flips
+  "likely to work" to no-call ("target locus not callable") in
+  train_baseline's eval path (`apply_gate_override`, pure function);
+  flip counts land in reports/train_summary.json ("gate_flips") and
+  per-genome statuses in demo/data/gate_status.json (`write_gate_json`,
+  also via `python -m pipeline.target_gate --genomes ... --drugs ...`).
 
 ## Full run (once the CPU batch frees up)
 
@@ -77,8 +101,10 @@ res = metrics.evaluate_all(
 ## Tests
 
 ```bash
-cd pipeline && ../pipeline/.venv/bin/python -m pytest -q   # 22 passed
+cd pipeline && ../pipeline/.venv/bin/python -m pytest -q   # 34 passed
 ```
 
 All tests run on synthetic data; Docker/skani is exercised only by the manual
-smoke validation (`run_skani_triangle` on 5 genomes), never by pytest.
+smoke validation (`run_skani_triangle` on 5 genomes), never by pytest. The
+target-gate tests build a synthetic donor + query FASTAs/TSVs in tmp_path;
+no AMRFinderPlus run is needed.
