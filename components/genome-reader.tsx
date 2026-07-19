@@ -231,9 +231,6 @@ function GenomeReader() {
                   <ChevronIcon />
                 </span>
               </label>
-              <div className="sequence-metrics">
-                <span><b>GC</b>{summary ? `${summary.gcContent.toFixed(1)}%` : "—"}</span>
-              </div>
             </div>
 
             <button

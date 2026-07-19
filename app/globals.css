@@ -154,17 +154,13 @@ button { cursor: pointer; }
 .dropzone-actions .quiet-action { min-width: 76px; color: rgba(245,245,240,.72); border-color: rgba(245,245,240,.22); background: transparent; }
 .dropzone-actions .quiet-action:hover { color: #050505; background: #f5f5f0; }
 
-.reader-controls { display: grid; grid-template-columns: minmax(180px, 1fr) 1fr; gap: 12px; }
+.reader-controls { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .reader-controls > label { display: grid; gap: 8px; }
 .reader-controls > label > span:first-child { color: rgba(245,245,240,.46); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 7px; letter-spacing: .14em; }
 .reader-select { position: relative; display: block; }
 .reader-select select { width: 100%; height: 48px; padding: 0 38px 0 14px; appearance: none; outline: 0; color: #f5f5f0; border: 1px solid rgba(245,245,240,.2); border-radius: 2px; background: rgba(255,255,255,.035); font-size: 11px; }
 .reader-select select:focus { border-color: rgba(245,245,240,.7); }
 .reader-select svg { position: absolute; top: 14px; right: 12px; width: 20px; height: 20px; fill: none; stroke: rgba(245,245,240,.55); stroke-width: 1.2; pointer-events: none; }
-.sequence-metrics { display: grid; grid-template-columns: repeat(3, 1fr); align-self: end; height: 48px; border: 1px solid rgba(245,245,240,.2); border-radius: 2px; }
-.sequence-metrics > span { display: flex; min-width: 0; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; color: rgba(245,245,240,.82); border-right: 1px solid rgba(245,245,240,.12); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
-.sequence-metrics > span:last-child { border-right: 0; }
-.sequence-metrics b { margin-bottom: 3px; color: rgba(245,245,240,.35); font-size: 6px; font-weight: 500; letter-spacing: .1em; }
 
 .analysis-button { display: flex; width: 100%; min-height: 54px; align-items: center; justify-content: space-between; padding: 0 18px 0 21px; color: #f5f5f0; border: 1px solid rgba(245,245,240,.52); border-radius: 100px; background: linear-gradient(180deg, #202020, #000); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 10px 28px rgba(0,0,0,.25); font-size: 9px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; transition: border-color .2s, opacity .2s, transform .2s, box-shadow .2s; }
 .analysis-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.3; }
