@@ -19,6 +19,17 @@ export default defineSchema({
       v.union(v.literal("known_marker"), v.literal("statistical_association"), v.literal("no_known_signal")),
     ),
     modelVersion: v.optional(v.string()),
+    noCall: v.optional(v.boolean()),
+    detectedGenes: v.optional(
+      v.array(
+        v.object({
+          symbol: v.string(),
+          name: v.string(),
+          tier: v.string(),
+          confidence: v.string(),
+        }),
+      ),
+    ),
     sequenceLength: v.optional(v.number()),
     contigCount: v.optional(v.number()),
     error: v.optional(v.string()),

@@ -454,7 +454,16 @@ function ResultState({ result, antibiotic, fileName, onReset }: {
       <dl className="result-metrics">
         <div><dt>Confidence</dt><dd>{Math.round(result.confidence * 100)}%</dd></div>
         <div><dt>Evidence class</dt><dd>{evidence}</dd></div>
-        <div><dt>Sequence</dt><dd title={fileName}>{fileName}</dd></div>
+        {result.detectedGenes && result.detectedGenes.length > 0 ? (
+          <div>
+            <dt>Resistance genes</dt>
+            <dd title={result.detectedGenes.map((g) => g.symbol).join(", ")}>
+              {result.detectedGenes.map((g) => g.symbol).join(", ")}
+            </dd>
+          </div>
+        ) : (
+          <div><dt>Sequence</dt><dd title={fileName}>{fileName}</dd></div>
+        )}
       </dl>
       <div className="clinical-warning"><span>!</span><p><strong>Laboratory confirmation required.</strong> This result is research decision support and must not be used as an autonomous treatment recommendation.</p></div>
     </div>

@@ -6,7 +6,7 @@
 
 ## Product prototype
 
-The product surface is a Next.js App Router application backed by Convex. It validates an assembled FASTA in the browser, uploads it directly to Convex storage, invokes a private Hugging Face inference endpoint from a Convex action, and stores an analysis audit record. A local simulation mode keeps the entire interface usable before cloud services are configured.
+The product surface is a Next.js App Router application backed by Convex. It validates an assembled FASTA in the browser, uploads it directly to Convex storage, invokes the Genome Firewall inference service (AMRFinderPlus + trained models) from a Convex action, and stores an analysis audit record. A local simulation mode keeps the entire interface usable before cloud services are configured.
 
 The original 15-second DNA → feature tokens → neural classifier animation is integrated into the inference state. The score is never revealed before the complete sequence has played.
 
@@ -20,15 +20,18 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). With an empty `NEXT_PUBLIC_CONVEX_URL`, choose **Use demo sequence** to exercise the complete local flow.
 
-### Connect Convex and Hugging Face
+### Connect Convex and the inference service
+
+Deploy the Genome Firewall inference service (see [`inference/`](inference/)) and
+point Convex at it:
 
 ```bash
 npm run convex:dev
-npx convex env set HUGGINGFACE_ENDPOINT_URL https://your-endpoint.endpoints.huggingface.cloud
-npx convex env set HUGGINGFACE_TOKEN hf_your_token
+npx convex env set INFERENCE_API_URL https://your-inference-host
+npx convex env set INFERENCE_API_TOKEN <optional-shared-secret>   # optional
 ```
 
-The Convex CLI writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` to `.env.local`. Restart Next.js after that change. The endpoint request and response contracts are documented in [`convex/README.md`](convex/README.md).
+The Convex CLI writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` to `.env.local`. Restart Next.js after that change. The service takes an uploaded FASTA, runs AMRFinderPlus + the trained models, and returns a real prediction. The request/response contract is documented in [`convex/README.md`](convex/README.md); the service itself in [`inference/README.md`](inference/README.md).
 
 ### Commands
 

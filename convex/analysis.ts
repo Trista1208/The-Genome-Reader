@@ -12,6 +12,12 @@ const evidenceValidator = v.union(
   v.literal("statistical_association"),
   v.literal("no_known_signal"),
 );
+const detectedGeneValidator = v.object({
+  symbol: v.string(),
+  name: v.string(),
+  tier: v.string(),
+  confidence: v.string(),
+});
 
 export const createPending = internalMutation({
   args: {
@@ -35,6 +41,8 @@ export const markComplete = internalMutation({
     classification: classificationValidator,
     evidence: evidenceValidator,
     modelVersion: v.string(),
+    noCall: v.boolean(),
+    detectedGenes: v.array(detectedGeneValidator),
     sequenceLength: v.number(),
     contigCount: v.number(),
   },
@@ -70,31 +78,30 @@ export const runInference = action({
       const fasta = await file.text();
       const { sequenceLength, contigCount } = inspectFasta(fasta);
 
-      const endpoint = process.env.HUGGINGFACE_ENDPOINT_URL;
-      const token = process.env.HUGGINGFACE_TOKEN;
-      if (!endpoint || !token) {
-        throw new Error("The Hugging Face inference endpoint is not configured.");
+      // The Genome Firewall inference service: FASTA -> AMRFinderPlus -> model.
+      // See inference/serve.py. Deployed by the team; URL set in the Convex dashboard.
+      const endpoint = process.env.INFERENCE_API_URL ?? process.env.HUGGINGFACE_ENDPOINT_URL;
+      const token = process.env.INFERENCE_API_TOKEN ?? process.env.HUGGINGFACE_TOKEN;
+      if (!endpoint) {
+        throw new Error("The inference service is not configured (set INFERENCE_API_URL).");
       }
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(new URL("/predict", endpoint), {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({
-          inputs: { fasta, antibiotic: args.antibiotic },
-          options: { wait_for_model: true },
-        }),
+        body: JSON.stringify({ fasta, antibiotic: args.antibiotic }),
       });
 
       if (!response.ok) {
         const details = (await response.text()).slice(0, 240);
-        throw new Error(`Inference endpoint returned ${response.status}${details ? `: ${details}` : ""}`);
+        throw new Error(`Inference service returned ${response.status}${details ? `: ${details}` : ""}`);
       }
 
       const payload: unknown = await response.json();
-      const normalized = normalizeModelResponse(payload);
+      const normalized = parseServiceResponse(payload);
       const result = { ...normalized, sequenceLength, contigCount };
 
       await ctx.runMutation(internal.analysis.markComplete, { analysisId, ...result });
@@ -118,29 +125,61 @@ function inspectFasta(fasta: string) {
   return { sequenceLength: sequence.length, contigCount };
 }
 
-function normalizeModelResponse(payload: unknown) {
-  const record = Array.isArray(payload) ? payload[0] : payload;
-  if (!record || typeof record !== "object") throw new Error("The model returned an unsupported response shape.");
-  const output = record as Record<string, unknown>;
-  const score = readProbability(output.score ?? output.probability ?? output.effectiveness_score);
-  const confidence = readProbability(output.confidence ?? Math.max(score, 1 - score));
-  const classification = score >= 0.65
-    ? "likely_effective"
-    : score <= 0.35
-      ? "likely_ineffective"
-      : "uncertain";
-  const requestedEvidence = output.evidence;
-  const evidence = requestedEvidence === "known_marker" || requestedEvidence === "no_known_signal"
-    ? requestedEvidence
-    : "statistical_association";
-  const modelVersion = typeof output.model_version === "string" ? output.model_version : "HF-ENDPOINT-UNVERSIONED";
+// The service already speaks the app's contract (score = probability effective,
+// classification decided by the model's no-call bands, evidence from detected
+// genes). We validate the numbers and trust the verdict.
+function parseServiceResponse(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    throw new Error("The inference service returned an unsupported response shape.");
+  }
+  const output = payload as Record<string, unknown>;
 
-  return { score, confidence, classification, evidence, modelVersion } as const;
+  const score = readProbability(output.score);
+  const confidence = readProbability(
+    typeof output.confidence === "number" ? output.confidence : Math.max(score, 1 - score),
+  );
+
+  const classification = output.classification;
+  if (
+    classification !== "likely_effective" &&
+    classification !== "uncertain" &&
+    classification !== "likely_ineffective"
+  ) {
+    throw new Error("The inference service returned an invalid classification.");
+  }
+
+  const evidence =
+    output.evidence === "known_marker" || output.evidence === "no_known_signal"
+      ? output.evidence
+      : "statistical_association";
+
+  const modelVersion =
+    typeof output.modelVersion === "string"
+      ? output.modelVersion
+      : typeof output.model_version === "string"
+        ? output.model_version
+        : "GFR-ECOLI";
+
+  const noCall = typeof output.noCall === "boolean" ? output.noCall : classification === "uncertain";
+
+  const detectedGenes = Array.isArray(output.detectedGenes)
+    ? output.detectedGenes.slice(0, 50).map((g) => {
+        const gene = (g ?? {}) as Record<string, unknown>;
+        return {
+          symbol: String(gene.symbol ?? ""),
+          name: String(gene.name ?? ""),
+          tier: String(gene.tier ?? ""),
+          confidence: String(gene.confidence ?? ""),
+        };
+      })
+    : [];
+
+  return { score, confidence, classification, evidence, modelVersion, noCall, detectedGenes } as const;
 }
 
 function readProbability(value: unknown) {
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error("The model response did not include a probability between 0 and 1.");
+    throw new Error("The inference service did not return a probability between 0 and 1.");
   }
   return value;
 }
