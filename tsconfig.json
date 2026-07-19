@@ -37,6 +37,8 @@
   ],
   "exclude": [
     "node_modules",
-    "convex"
+    "convex",
+    "web",
+    "web-demos"
   ]
 }
