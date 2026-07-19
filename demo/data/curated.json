@@ -1,0 +1,30 @@
+{
+ "resistant": {
+  "genome_id": "562.140931",
+  "headline": "Textbook resistant",
+  "why": [
+   "Lab phenotype: ciprofloxacin Resistant (re-derived, data/clean).",
+   "AMRFinderPlus: QRDR point mutations at gyrA (gyrA_D87N/gyrA_S83L), parC (parC_E84V/parC_S80I), parE (parE_I529L) -> spectrum-confirmed category-(i) evidence.",
+   "Split: heldout_group (never trained on). Verdict: likely to fail."
+  ]
+ },
+ "susceptible": {
+  "genome_id": "562.100280",
+  "headline": "Honest likely-to-work",
+  "why": [
+   "Lab phenotype: susceptible on all 5 modeled drugs (re-derived labels).",
+   "gyrA and parC loci verified wild-type-intact by the k-mer callability check \u2014 'no mutation found' is a measured WT, not a missing locus.",
+   "Split: test. Verdict: likely to work on 5/5 drugs."
+  ]
+ },
+ "refusal": {
+  "genome_id": "562.100124",
+  "headline": "The refusal",
+  "why": [
+   "Held-out genetic group (clade 6); nearest training genome is 1.03 ANI-distance away.",
+   "Calibrated ciprofloxacin score 0.088 \u2014 a naive 0.5-threshold caller would have said \"likely to work\". Lab truth: Resistant. The abstention band catches exactly this error: no-call on 5/5 drugs.",
+   "This is the win, not a failure: abstention is standard behavior in every credible AMR tool (EUCAST ATU, ResFinder panel scope) \u2014 here it is automated and measured."
+  ],
+  "showcase_drug": "ciprofloxacin"
+ }
+}
