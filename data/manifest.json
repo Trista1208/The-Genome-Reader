@@ -1,0 +1,11 @@
+{
+  "pulled_at": "2026-07-19T02:08:35",
+  "source": "BV-BRC (bv-brc.org), evidence==Laboratory Method only",
+  "labels": {
+    "ecoli": 39378643,
+    "kpneumoniae": 14709075,
+    "ngonorrhoeae": 11675948
+  },
+  "genomes_fna": 3000,
+  "max_genomes_requested": 3000
+}

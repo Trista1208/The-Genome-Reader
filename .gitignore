@@ -26,3 +26,8 @@ splits/skani_edges.tsv
 splits/splits_run.log
 splits/skani_genomes.list
 splits/strat_labels_cipro.csv
+
+# runtime artifacts
+features/amrfinder/
+features/amrfinder_mutall/
+dist/
