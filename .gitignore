@@ -19,3 +19,7 @@ reports/
 
 # --- os ---
 .DS_Store
+
+# --- sprint artifacts (large/regenerable) ---
+splits/skani_edges.tsv
+.tmp_sprint_genomes/
