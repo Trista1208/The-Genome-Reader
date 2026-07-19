@@ -6,3 +6,8 @@ models/
 data/processed/
 *.joblib
 *.npz
+
+# Keep the small trained baseline models and their evaluation reports in this repository.
+!models/
+!models/*.joblib
+!models/*.json

@@ -282,6 +282,21 @@ pytest tests/ -q
 
 ## References
 
+## Trained AMRFinderPlus baseline (2026-07-19)
+
+The four model files in `models/` are the completed class-weighted L2 logistic-regression baseline, not the earlier Random Forest design described above. They use 529 binary AMRFinderPlus features learned from training genomes only. The fixed cgMLST HC20 split contains 1,325 training, 283 calibration, and 283 test genomes, with zero genetic-group leakage.
+
+| Antibiotic | Test n | Accuracy | Balanced accuracy | Coverage | Called accuracy |
+|---|---:|---:|---:|---:|---:|
+| Ampicillin | 99 | 92.9% | 92.8% | 85.9% | 95.3% |
+| Ciprofloxacin | 101 | 97.0% | 94.6% | 100.0% | 97.0% |
+| Cefotaxime | 98 | 93.9% | 88.9% | 98.0% | 94.8% |
+| Gentamicin | 113 | 94.7% | 93.4% | 88.5% | 97.0% |
+
+Across all 411 antibiotic-genome test pairs, ordinary accuracy is 94.6% (389/411). See `models/training_report.json` for calibration and full held-out metrics and `models/test_evaluation.json` for accuracy, coverage, and confusion matrices. These are research results, not clinical validation; confirm every prediction with laboratory susceptibility testing.
+
+---
+
 - Challenge brief: *Genome Firewall: An AI Defense System Against Superbugs* (Hack-Nation 6th Global AI Hackathon)  
 - [AMRFinderPlus](https://github.com/ncbi/amr)  
 - [BV-BRC FTP](https://www.bv-brc.org/docs/quick_references/ftp.html)  

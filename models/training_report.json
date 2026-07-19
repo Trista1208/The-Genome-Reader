@@ -1,0 +1,232 @@
+{
+  "antibiotics": {
+    "ampicillin": {
+      "antibiotic": "ampicillin",
+      "calibration_method": "platt",
+      "calibration_threshold_selection": {
+        "balanced_accuracy_called": 0.9680851063829787,
+        "coverage": 0.776595744680851
+      },
+      "class_counts": {
+        "calibration": {
+          "n": 94,
+          "resistant": 56,
+          "susceptible": 38
+        },
+        "test": {
+          "n": 99,
+          "resistant": 61,
+          "susceptible": 38
+        },
+        "train": {
+          "n": 436,
+          "resistant": 249,
+          "susceptible": 187
+        }
+      },
+      "no_call_band": [
+        0.22499999999999998,
+        0.775
+      ],
+      "novelty_threshold": 0.37829046015387946,
+      "test": {
+        "ambiguous_rate": 0.13131313131313133,
+        "auroc": 0.9594477998274376,
+        "balanced_accuracy": 0.927739430543572,
+        "brier": 0.0694284187876894,
+        "called_balanced_accuracy": 0.9467418546365916,
+        "called_n": 85,
+        "coverage": 0.8585858585858586,
+        "f1": 0.9421487603305785,
+        "n": 99,
+        "no_call_rate": 0.1414141414141414,
+        "ood_rate": 0.010101010101010102,
+        "pr_auc": 0.9759681801571592,
+        "resistant": 61,
+        "resistant_recall": 0.9344262295081968,
+        "susceptible": 38,
+        "susceptible_recall": 0.9210526315789473
+      },
+      "test_by_genetic_group": {}
+    },
+    "cefotaxime": {
+      "antibiotic": "cefotaxime",
+      "calibration_method": "platt",
+      "calibration_threshold_selection": {
+        "balanced_accuracy_called": 0.9761904761904762,
+        "coverage": 0.9696969696969697
+      },
+      "class_counts": {
+        "calibration": {
+          "n": 99,
+          "resistant": 23,
+          "susceptible": 76
+        },
+        "test": {
+          "n": 98,
+          "resistant": 24,
+          "susceptible": 74
+        },
+        "train": {
+          "n": 429,
+          "resistant": 100,
+          "susceptible": 329
+        }
+      },
+      "no_call_band": [
+        0.425,
+        0.575
+      ],
+      "novelty_threshold": 0.42891313771045636,
+      "test": {
+        "ambiguous_rate": 0.02040816326530612,
+        "auroc": 0.9797297297297297,
+        "balanced_accuracy": 0.8890765765765766,
+        "brier": 0.04635253193723565,
+        "called_balanced_accuracy": 0.8913043478260869,
+        "called_n": 96,
+        "coverage": 0.9795918367346939,
+        "f1": 0.8636363636363636,
+        "n": 98,
+        "no_call_rate": 0.02040816326530612,
+        "ood_rate": 0.0,
+        "pr_auc": 0.9562454026325977,
+        "resistant": 24,
+        "resistant_recall": 0.7916666666666666,
+        "susceptible": 74,
+        "susceptible_recall": 0.9864864864864865
+      },
+      "test_by_genetic_group": {
+        "hc20:36078": {
+          "balanced_accuracy": 1.0,
+          "brier": 0.012568292591737033,
+          "f1": 1.0,
+          "n": 5,
+          "resistant": 5,
+          "resistant_recall": 1.0,
+          "susceptible": 0,
+          "susceptible_recall": 0.0
+        }
+      }
+    },
+    "ciprofloxacin": {
+      "antibiotic": "ciprofloxacin",
+      "calibration_method": "platt",
+      "calibration_threshold_selection": {
+        "balanced_accuracy_called": 0.9709939148073022,
+        "coverage": 0.9661016949152542
+      },
+      "class_counts": {
+        "calibration": {
+          "n": 118,
+          "resistant": 31,
+          "susceptible": 87
+        },
+        "test": {
+          "n": 101,
+          "resistant": 28,
+          "susceptible": 73
+        },
+        "train": {
+          "n": 477,
+          "resistant": 112,
+          "susceptible": 365
+        }
+      },
+      "no_call_band": [
+        0.5,
+        0.5
+      ],
+      "novelty_threshold": 0.38490658703495473,
+      "test": {
+        "ambiguous_rate": 0.0,
+        "auroc": 0.9995107632093934,
+        "balanced_accuracy": 0.9464285714285714,
+        "brier": 0.01993569771926924,
+        "called_balanced_accuracy": 0.9464285714285714,
+        "called_n": 101,
+        "coverage": 1.0,
+        "f1": 0.9433962264150944,
+        "n": 101,
+        "no_call_rate": 0.0,
+        "ood_rate": 0.0,
+        "pr_auc": 0.9987684729064038,
+        "resistant": 28,
+        "resistant_recall": 0.8928571428571429,
+        "susceptible": 73,
+        "susceptible_recall": 1.0
+      },
+      "test_by_genetic_group": {
+        "hc20:36078": {
+          "balanced_accuracy": 1.0,
+          "brier": 0.006597513094081596,
+          "f1": 0.0,
+          "n": 5,
+          "resistant": 0,
+          "resistant_recall": 0.0,
+          "susceptible": 5,
+          "susceptible_recall": 1.0
+        }
+      }
+    },
+    "gentamicin": {
+      "antibiotic": "gentamicin",
+      "calibration_method": "platt",
+      "calibration_threshold_selection": {
+        "balanced_accuracy_called": 0.9444444444444444,
+        "coverage": 0.9405940594059405
+      },
+      "class_counts": {
+        "calibration": {
+          "n": 101,
+          "resistant": 12,
+          "susceptible": 89
+        },
+        "test": {
+          "n": 113,
+          "resistant": 12,
+          "susceptible": 101
+        },
+        "train": {
+          "n": 463,
+          "resistant": 55,
+          "susceptible": 408
+        }
+      },
+      "no_call_band": [
+        0.22499999999999998,
+        0.775
+      ],
+      "novelty_threshold": 0.4225790177664181,
+      "test": {
+        "ambiguous_rate": 0.11504424778761062,
+        "auroc": 0.9707095709570956,
+        "balanced_accuracy": 0.9335808580858085,
+        "brier": 0.04750008832822317,
+        "called_balanced_accuracy": 0.9433094994892748,
+        "called_n": 100,
+        "coverage": 0.8849557522123894,
+        "f1": 0.7857142857142857,
+        "n": 113,
+        "no_call_rate": 0.11504424778761062,
+        "ood_rate": 0.0,
+        "pr_auc": 0.7694580610021786,
+        "resistant": 12,
+        "resistant_recall": 0.9166666666666666,
+        "susceptible": 101,
+        "susceptible_recall": 0.9504950495049505
+      },
+      "test_by_genetic_group": {}
+    }
+  },
+  "feature_metadata": {
+    "catalog_fit_split": "train",
+    "min_training_genomes": 1,
+    "n_features": 529,
+    "n_genomes": 1891,
+    "source": "AMRFinderPlus"
+  },
+  "model_version": "0.1.0",
+  "safety": "Research only; confirm every prediction with standard laboratory testing.",
+  "seed": 20260719
+}
