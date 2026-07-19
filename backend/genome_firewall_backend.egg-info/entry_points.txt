@@ -1,3 +1,0 @@
-[console_scripts]
-gf-score = genome_firewall.cli.score:main
-gf-train = genome_firewall.cli.train:main
