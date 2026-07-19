@@ -334,7 +334,7 @@
     });
   }
 
-  function render(time) {
+  function render(time, flowTime = time) {
     context.clearRect(0, 0, width, height);
     const sceneAlpha = Math.min(
       smooth(time / .6),
@@ -345,7 +345,7 @@
     const network = buildNetwork(time);
     const dnaFade = 1 - smooth((time - 8.05) / 1.05);
     const dna = drawRealisticDna(time, dnaFade);
-    drawNetwork(time, network);
+    drawNetwork(time, network, flowTime);
     drawParticleFlow(time, dna, network);
     context.restore();
   }
@@ -360,12 +360,13 @@
     lastRender = now;
     if (!prefersReducedMotion && !isFrozenPreview && running) {
       elapsed += delta;
-      if (elapsed >= LOOP_DURATION) {
-        elapsed = LOOP_DURATION - .001;
-        running = false;
-      }
     }
-    render(elapsed);
+    // The intro plays through once (elapsed 0 -> HOLD_TIME); after that the
+    // structural timeline is pinned at HOLD_TIME so the network stays fully
+    // formed and never fades out, while `elapsed` keeps advancing to drive the
+    // synapse pulses. The loop runs until stop() is called (result arrived).
+    const structural = Math.min(elapsed, HOLD_TIME);
+    render(structural, elapsed);
     if (!prefersReducedMotion && !isFrozenPreview && running) requestAnimationFrame(animate);
   }
 
@@ -392,7 +393,10 @@
     render(elapsed);
     if (running && !wasRunning) requestAnimationFrame(animate);
   };
-  window.GenomeSequenceAnimation = { restart };
+  const stop = () => {
+    running = false;
+  };
+  window.GenomeSequenceAnimation = { restart, stop };
   window.addEventListener("genome:restart-animation", restart);
   resize();
   render(elapsed);

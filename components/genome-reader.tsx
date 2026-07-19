@@ -50,7 +50,7 @@ const DEMO_RESULT: AnalysisResult = {
 
 declare global {
   interface Window {
-    GenomeSequenceAnimation?: { restart: () => void };
+    GenomeSequenceAnimation?: { restart: () => void; stop: () => void };
   }
 }
 
@@ -436,6 +436,13 @@ function GenomeAnalysisRun({
       timers.forEach(window.clearTimeout);
     };
   }, [pending, router, runInference]);
+
+  // The canvas animation holds on the fully-formed classifier network for as
+  // long as inference runs (1-3 min). Once we have a verdict (or an error),
+  // stop the loop so it doesn't keep painting under the hidden canvas.
+  useEffect(() => {
+    if (phase === "complete" || phase === "error") window.GenomeSequenceAnimation?.stop();
+  }, [phase]);
 
   // In demo/offline mode the backend never sees the run, so persist the result
   // to the localStorage knowledge tree ourselves. (Convex mode already stores it.)
