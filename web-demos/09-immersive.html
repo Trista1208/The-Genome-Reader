@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genome Firewall — Immersive</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+:root{
+  --char:#14110f; --paper:#f7f5f2; --ash:#9a938c; --red:#dc2626;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:var(--char);
+  font-family:'Inter',ui-sans-serif,system-ui,sans-serif;color:var(--paper);
+  -webkit-font-smoothing:antialiased}
+canvas{display:block}
+
+/* ---------- vignette + grain ---------- */
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(20,17,15,.55) 100%)}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;z-index:10;font-family:var(--mono);pointer-events:none}
+#hud-logo{top:26px;left:30px;display:flex;align-items:center;gap:11px;
+  font-size:12px;font-weight:500;letter-spacing:.3em}
+#hud-logo svg{display:block}
+#hud-status{top:28px;right:30px;font-size:11px;letter-spacing:.18em;color:var(--ash)}
+#hud-status b{color:var(--red);font-weight:400;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+#hud-hint{bottom:26px;right:30px;font-size:10px;letter-spacing:.18em;color:var(--ash);text-align:right}
+#hud-depth{bottom:26px;left:30px;font-size:10px;letter-spacing:.18em;color:var(--ash)}
+#hud-depth b{color:var(--paper);font-weight:400}
+
+/* ---------- story beats ---------- */
+#beat{position:fixed;left:30px;bottom:70px;z-index:10;max-width:430px;pointer-events:none}
+#beat .bk{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--red);margin-bottom:14px}
+#beat .bt{font-size:clamp(26px,2.6vw,40px);font-weight:400;letter-spacing:-.03em;line-height:1.05;margin-bottom:14px}
+#beat .bs{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--ash)}
+#beat{transition:opacity .5s}
+
+/* ---------- end panel (report) ---------- */
+#endpanel{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .8s}
+#endpanel.on{opacity:1;pointer-events:auto}
+.panel{max-width:660px;width:calc(100% - 48px);background:rgba(20,17,15,.82);
+  border:1px solid rgba(220,38,38,.25);backdrop-filter:blur(14px);padding:44px 44px 36px}
+.panel .pk{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--red);margin-bottom:18px}
+.panel h2{font-size:clamp(24px,2.4vw,34px);font-weight:400;letter-spacing:-.03em;margin-bottom:6px}
+.panel .meta{font-family:var(--mono);font-size:11px;color:var(--ash);margin-bottom:28px}
+.rrow{display:grid;grid-template-columns:1.2fr .9fr .5fr;gap:16px;padding:11px 0;
+  border-bottom:1px solid rgba(247,245,242,.08);font-family:var(--mono);font-size:12px;align-items:baseline}
+.rrow.head{color:var(--ash);font-size:9px;letter-spacing:.18em;text-transform:uppercase;border-bottom-color:rgba(247,245,242,.2)}
+.drug{color:var(--paper)}
+.v-f{color:var(--red)} .v-w{color:var(--paper)} .v-n{color:var(--ash)}
+.conf{text-align:right;color:var(--paper)}
+.panel .banner{margin-top:22px;font-family:var(--mono);font-size:10.5px;line-height:1.7;color:var(--ash);
+  border-left:2px solid var(--red);padding-left:14px}
+.panel .banner b{color:var(--paper);font-weight:400}
+.panel .cta{margin-top:28px;display:flex;gap:20px;align-items:center}
+.btn{pointer-events:auto;display:inline-block;background:var(--red);color:var(--paper);
+  text-decoration:none;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  padding:14px 24px;transition:box-shadow .25s}
+.btn:hover{box-shadow:0 0 34px rgba(220,38,38,.5)}
+.ghost-l{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ash);
+  text-transform:uppercase;text-decoration:none;border-bottom:1px solid rgba(154,147,140,.4);padding-bottom:3px}
+.ghost-l:hover{color:var(--paper)}
+
+/* ---------- intro ---------- */
+#intro{position:fixed;inset:0;z-index:30;background:var(--char);display:flex;
+  flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  transition:opacity 1.1s;cursor:pointer}
+#intro.off{opacity:0;pointer-events:none}
+#intro .ik{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--red);margin-bottom:30px}
+#intro h1{font-size:clamp(40px,7vw,110px);font-weight:400;letter-spacing:-.045em;line-height:.98}
+#intro h1 span{color:var(--red)}
+#intro .is{margin-top:30px;font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--ash);max-width:440px}
+#intro .go{margin-top:52px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--paper);
+  animation:hint 2.4s infinite}
+@keyframes hint{0%,100%{opacity:.4}50%{opacity:1}}
+
+@media(max-width:760px){
+  #beat{left:20px;bottom:90px;max-width:300px}
+  .panel{padding:30px 24px}
+  #hud-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="vignette"></div>
+
+<div class="hud" id="hud-logo">
+  <svg width="16" height="16" viewBox="0 0 22 22"><path d="M11 1 L21 20 L1 20 Z" fill="none" stroke="#dc2626" stroke-width="2"/></svg>
+  GENOME_FIREWALL
+</div>
+<div class="hud" id="hud-status">MODE // <b>DEFENSIVE</b></div>
+<div class="hud" id="hud-depth">DEPTH // <b id="depthVal">000</b></div>
+<div class="hud" id="hud-hint">scroll to travel<br>move mouse to look</div>
+
+<div id="beat">
+  <div class="bk" id="beatK">01 // ENTER THE GENOME</div>
+  <div class="bt" id="beatT">The answer is already sequenced in.</div>
+  <div class="bs" id="beatS">One reconstructed bacterial genome. Every resistance gene, every mutation — written down before any lab test begins.</div>
+</div>
+
+<div id="endpanel">
+  <div class="panel">
+    <div class="pk">DESTINATION // ANTIBIOTIC-RESPONSE REPORT</div>
+    <h2>sample_042.fasta</h2>
+    <div class="meta">escherichia coli · quality passed · research prototype</div>
+    <div class="rrow head"><span>antibiotic</span><span>verdict</span><span class="conf">conf</span></div>
+    <div class="rrow"><span class="drug">ciprofloxacin</span><span class="v-f">[ FAIL ]</span><span class="conf">0.91</span></div>
+    <div class="rrow"><span class="drug">ceftriaxone</span><span class="v-f">[ FAIL ]</span><span class="conf">0.84</span></div>
+    <div class="rrow"><span class="drug">meropenem</span><span class="v-w">[ WORK ]</span><span class="conf">0.88</span></div>
+    <div class="rrow"><span class="drug">gentamicin</span><span class="v-n">[ NO-CALL ]</span><span class="conf">—</span></div>
+    <p class="banner"><b>Decision support — not a decision.</b> Every prediction must be confirmed
+       by standard laboratory testing.</p>
+    <div class="cta">
+      <a class="btn" href="#">Analyze a Genome</a>
+      <a class="ghost-l" href="#">how it works</a>
+    </div>
+  </div>
+</div>
+
+<div id="intro">
+  <div class="ik">HACK-NATION · CHALLENGE 06</div>
+  <h1>GENOME<br><span>FIREWALL</span></h1>
+  <p class="is">an ai defense system against superbugs.<br>
+     dna becomes data. data becomes the wall.<br>
+     strictly defensive — never a treatment decision.</p>
+  <div class="go">SCROLL TO ENTER</div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const CHAR = 0x14110f, PAPER = 0xf7f5f2, RED = 0xdc2626;
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(CHAR, 0.026);
+
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, .1, 400);
+camera.position.set(0, 0, 8);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setClearColor(CHAR);
+document.body.appendChild(renderer.domElement);
+
+/* ============ helpers ============ */
+function makePoints(positions, colors, size, opacity = 1){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+  if (colors) g.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  const m = new THREE.PointsMaterial({
+    size, vertexColors: !!colors, color: colors ? 0xffffff : PAPER,
+    transparent: true, opacity, blending: THREE.AdditiveBlending,
+    depthWrite: false, sizeAttenuation: true
+  });
+  return new THREE.Points(g, m);
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+/* ============ ZONE 1: DNA helix tunnel (z: 0 → -130) ============ */
+const helix = new THREE.Group();
+{
+  const pos = [], col = [], N = 3600, TURNS = 9, R = 3.4, LEN = 138;
+  const cP = [0.97, 0.96, 0.95], cR = [0.86, 0.15, 0.15], cG = [0.55, 0.52, 0.49];
+  for (let i = 0; i < N; i++){
+    const t = i / N, a = t * Math.PI * 2 * TURNS;
+    const strand = i % 2 ? Math.PI : 0;
+    const z = -t * LEN;
+    pos.push(Math.cos(a + strand) * R, Math.sin(a + strand) * R, z);
+    const r = Math.random();
+    const c = r < .07 ? cR : (r < .6 ? cP : cG);
+    col.push(...c);
+    if (i % 24 === 0){ // rung
+      for (let k = 1; k < 4; k++){
+        const f = k / 4;
+        pos.push(Math.cos(a) * R + (Math.cos(a + Math.PI) - Math.cos(a)) * R * f,
+                 Math.sin(a) * R + (Math.sin(a + Math.PI) - Math.sin(a)) * R * f, z);
+        col.push(...cG);
+      }
+    }
+  }
+  helix.add(makePoints(pos, col, .09, .95));
+}
+scene.add(helix);
+
+/* floating base-pair motes in the tunnel */
+{
+  const pos = [], col = [];
+  for (let i = 0; i < 700; i++){
+    pos.push(rnd(-7, 7), rnd(-7, 7), rnd(5, -135));
+    const r = Math.random();
+    col.push(...(r < .05 ? [0.86, 0.15, 0.15] : [0.5, 0.48, 0.46]));
+  }
+  scene.add(makePoints(pos, col, .05, .6));
+}
+
+/* ============ ZONE 2: neural lattice (z: -150 → -260) ============ */
+const lattice = new THREE.Group();
+{
+  const layers = 6, perLayer = 90, pos = [], col = [], linePos = [];
+  let prev = null;
+  for (let l = 0; l < layers; l++){
+    const z = -150 - l * 22, layerPts = [];
+    for (let i = 0; i < perLayer; i++){
+      const x = rnd(-9, 9), y = rnd(-7, 7);
+      pos.push(x, y, z);
+      const r = Math.random();
+      col.push(...(r < .06 ? [0.86, 0.15, 0.15] : (r < .5 ? [0.9, 0.88, 0.86] : [0.45, 0.43, 0.41])));
+      layerPts.push([x, y, z]);
+    }
+    if (prev) for (let i = 0; i < perLayer * 2; i++){
+      const a = prev[(Math.random() * prev.length) | 0], b = layerPts[(Math.random() * layerPts.length) | 0];
+      linePos.push(...a, ...b);
+    }
+    prev = layerPts;
+  }
+  lattice.add(makePoints(pos, col, .12, .9));
+  const lg = new THREE.BufferGeometry();
+  lg.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+  lattice.add(new THREE.LineSegments(lg,
+    new THREE.LineBasicMaterial({ color: 0xc9c2ba, transparent: true, opacity: .07 })));
+}
+scene.add(lattice);
+
+/* ============ ZONE 3: THE BLACKWALL (z ≈ -320) ============ */
+const wall = new THREE.Group();
+{
+  const pos = [], col = [], W2 = 46, H2 = 26, D = 999;
+  for (let i = 0; i < 5200; i++){
+    const x = rnd(-W2 / 2, W2 / 2), y = rnd(-H2 / 2, H2 / 2), z = -320 + rnd(-1.6, 1.6);
+    pos.push(x, y, z);
+    const r = Math.random();
+    col.push(...(r < .55 ? [0.86, 0.15, 0.15] : (r < .8 ? [0.5, 0.08, 0.08] : [0.95, 0.9, 0.88])));
+  }
+  const wallPts = makePoints(pos, col, .10, .95);
+  wall.add(wallPts);
+
+  /* crimson glow plane behind */
+  const gc = document.createElement('canvas'); gc.width = gc.height = 256;
+  const g2 = gc.getContext('2d');
+  const grad = g2.createRadialGradient(128, 128, 10, 128, 128, 128);
+  grad.addColorStop(0, 'rgba(220,38,38,.55)');
+  grad.addColorStop(.5, 'rgba(220,38,38,.18)');
+  grad.addColorStop(1, 'rgba(220,38,38,0)');
+  g2.fillStyle = grad; g2.fillRect(0, 0, 256, 256);
+  const glow = new THREE.Mesh(
+    new THREE.PlaneGeometry(90, 55),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gc),
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+  glow.position.set(0, 0, -324);
+  wall.add(glow);
+
+  /* falling data streams on the wall face */
+  const streams = [];
+  for (let i = 0; i < 26; i++){
+    const h = rnd(3, 9);
+    const s = new THREE.Mesh(
+      new THREE.PlaneGeometry(.06, h),
+      new THREE.MeshBasicMaterial({ color: RED, transparent: true,
+        opacity: rnd(.25, .6), blending: THREE.AdditiveBlending, depthWrite: false }));
+    s.position.set(rnd(-W2 / 2, W2 / 2), rnd(-H2 / 2, H2 / 2), -318.4);
+    s.userData.sp = rnd(2, 7);
+    streams.push(s); wall.add(s);
+  }
+  wall.userData.streams = streams;
+}
+scene.add(wall);
+
+/* floor grid fading into fog */
+{
+  const grid = new THREE.GridHelper(300, 90, 0x3a2626, 0x241d1a);
+  grid.position.y = -8; grid.position.z = -140;
+  grid.material.transparent = true; grid.material.opacity = .35;
+  scene.add(grid);
+}
+
+/* ============ travel + look ============ */
+let targetZ = 8, lookX = 0, lookY = 0, started = false;
+const intro = document.getElementById('intro');
+function begin(){ if (!started){ started = true; intro.classList.add('off'); } }
+intro.addEventListener('click', begin);
+addEventListener('wheel', e => {
+  e.preventDefault(); begin();
+  targetZ = Math.max(-293, Math.min(8, targetZ - e.deltaY * .05));
+}, { passive: false });
+let lastTouch = null;
+addEventListener('touchstart', e => { begin(); lastTouch = e.touches[0].clientY; }, { passive: true });
+addEventListener('touchmove', e => {
+  const y = e.touches[0].clientY;
+  if (lastTouch !== null) targetZ = Math.max(-293, Math.min(8, targetZ + (y - lastTouch) * .12));
+  lastTouch = y;
+}, { passive: true });
+addEventListener('mousemove', e => {
+  lookX = (e.clientX / innerWidth - .5);
+  lookY = (e.clientY / innerHeight - .5);
+});
+
+/* ============ story beats ============ */
+const beats = [
+  { z: 8,    k: '01 // ENTER THE GENOME',   t: 'The answer is already sequenced in.',   s: 'One reconstructed bacterial genome. Every resistance gene, every mutation — written down before any lab test begins.' },
+  { z: -70,  k: '01 // THE STREAM',         t: 'DNA becomes data.',                     s: 'AMRFinderPlus maps known resistance markers into a documented, repeatable feature space. No magic — evidence.' },
+  { z: -175, k: '02 // THE LATTICE',        t: 'Data becomes judgment.',                s: 'One calibrated model per antibiotic, trained on laboratory-measured outcomes only. It learns resistance — never look-alikes.' },
+  { z: -268, k: '03 // THE WALL',           t: 'The wall decides nothing. It warns.',   s: 'Likely to fail. Likely to work. No-call. Weak evidence is returned as uncertainty — a strength, not a failure.' },
+];
+const beatEl = document.getElementById('beat');
+const bK = document.getElementById('beatK'), bT = document.getElementById('beatT'), bS = document.getElementById('beatS');
+const depthEl = document.getElementById('depthVal');
+const endpanel = document.getElementById('endpanel');
+let beatIdx = -1;
+
+/* ============ loop ============ */
+const clock = new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+
+  /* travel */
+  camera.position.z += (targetZ - camera.position.z) * .055;
+  camera.position.y = Math.sin(t * .8) * .12;
+  camera.rotation.y += ((-lookX * .3) - camera.rotation.y) * .06;
+  camera.rotation.x += ((-lookY * .18) - camera.rotation.x) * .06;
+
+  /* world life */
+  helix.rotation.z = t * .12;
+  lattice.children[0].material.opacity = .6 + Math.sin(t * 1.6) * .25;
+  if (Math.random() < .06) wall.position.x = (Math.random() - .5) * .5;
+  else wall.position.x *= .8;
+  for (const s of wall.userData.streams){
+    s.position.y -= s.userData.sp * .016;
+    if (s.position.y < -14) s.position.y = 14;
+  }
+
+  /* beats + depth */
+  const z = camera.position.z;
+  depthEl.textContent = String(Math.max(0, Math.round(8 - z))).padStart(3, '0');
+  let bi = 0;
+  for (let i = 0; i < beats.length; i++) if (z <= beats[i].z + 14) bi = i;
+  if (z > beats[0].z + 14) bi = 0;
+  if (bi !== beatIdx){
+    beatIdx = bi;
+    const b = beats[bi];
+    beatEl.style.opacity = 0;
+    setTimeout(() => {
+      bK.textContent = b.k; bT.textContent = b.t; bS.textContent = b.s;
+      beatEl.style.opacity = 1;
+    }, 260);
+  }
+  beatEl.style.opacity = (z < -282) ? 0 : 1;
+  endpanel.classList.toggle('on', z < -288);
+
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

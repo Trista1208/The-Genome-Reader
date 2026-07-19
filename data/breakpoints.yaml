@@ -1,0 +1,96 @@
+# MIC breakpoints used to re-derive S/R calls from raw measurements.
+#
+# Semantics (EUCAST convention): S if MIC <= s_max_mg_l, R if MIC > r_min_mg_l.
+# Values in mg/L.
+#
+# ecoli entries below are FILLED from the current EUCAST table (v16.1, see
+# per-drug provenance). clean_labels.py SKIPS any drug whose breakpoint is
+# null — it never guesses. Species left as {} (kpneumoniae, ngonorrhoeae)
+# still have every MIC-parseable drug skipped and listed in the audit.
+#
+# One standard per species is the design goal (CONTRACT: one final call);
+# 'standard'/'standard_year' record which table the numbers came from.
+#
+# Common source for all ecoli entries:
+#   document:  EUCAST Clinical Breakpoint Tables v16.1
+#              (valid from 2026-06-24; v16.x valid 2026-01-01 to 2026-12-31)
+#   url:       https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+#              (cross-checked against the PDF of the same table:
+#               https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.pdf)
+#   sheet:     "Enterobacterales" (per table footnote: breakpoints apply to
+#              all members of the order Enterobacterales, incl. E. coli)
+#   accessed:  2026-07-19
+
+ecoli:
+  ciprofloxacin:
+    standard: EUCAST
+    standard_year: 2026
+    s_max_mg_l: 0.25          # Enterobacterales, "Ciprofloxacin (indications other than meningitis)": S <= 0.25
+    r_min_mg_l: 0.5           # R > 0.5 (table also lists an ATU of 0.5; MIC 0.5 = I, not binary)
+    # Separate table rows NOT used: meningitis (S<=0.125/R>0.125) and
+    # Salmonella spp. (S<=0.06/R>0.06) — neither applies to generic E. coli.
+    source_document: EUCAST Clinical Breakpoint Tables
+    source_version: "16.1 (valid from 2026-06-24)"
+    source_url: https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+    accessed: 2026-07-19
+  gentamicin:
+    standard: EUCAST
+    standard_year: 2026
+    s_max_mg_l: 2             # "Gentamicin (infections originating from the urinary tract)": S <= 2
+    r_min_mg_l: 2             # R > 2
+    # CONVENTION NOTE: the table's "Gentamicin (systemic infections)" row is
+    # bracketed — (2)/(2) — meaning an ECOFF-based screen, not a clinical S/I
+    # breakpoint (EUCAST Notes: "Breakpoints in brackets distinguish between
+    # isolates without and with phenotypically detectable resistance
+    # mechanisms... Reporting S or I should be avoided"). The numeric
+    # threshold is identical (2 mg/L) in both rows, so re-derived calls are
+    # the same whichever row applies; values here are exactly what the table
+    # prints, but systemic S calls should be read as "wild type", not a
+    # clinical susceptibility endorsement.
+    source_document: EUCAST Clinical Breakpoint Tables
+    source_version: "16.1 (valid from 2026-06-24)"
+    source_url: https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+    accessed: 2026-07-19
+  ampicillin:
+    standard: EUCAST
+    standard_year: 2026
+    s_max_mg_l: 8             # "Ampicillin iv": S <= 8 (footnoted: see EUCAST guidance on the new aminopenicillin breakpoints)
+    r_min_mg_l: 8             # R > 8
+    # "Ampicillin oral (uncomplicated UTI only)" row is also 8/8, so the
+    # value is indication-independent here.
+    source_document: EUCAST Clinical Breakpoint Tables
+    source_version: "16.1 (valid from 2026-06-24)"
+    source_url: https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+    accessed: 2026-07-19
+  trimethoprim/sulfamethoxazole:
+    standard: EUCAST
+    standard_year: 2026
+    s_max_mg_l: 0.5           # TRIMETHOPRIM component. Table note 8: "Trimethoprim:sulfamethoxazole
+    r_min_mg_l: 0.5           # in the ratio 1:19. Breakpoints are expressed as the trimethoprim concentration."
+    # INTERPRETATION: values above are mg/L of trimethoprim alone (the
+    # sulfamethoxazole part at 19x is implicit). This matches the lab
+    # convention for reported SXT MICs (panels test 1:19 and report the TMP
+    # concentration). Table row used: "Enterobacterales except Serratia spp."
+    # (E. coli included). The separate "Serratia spp." row (S<=0.001/R>2) is
+    # NOT used. v16.1 lists SXT among its revised breakpoints; older tables
+    # (v14.0 and earlier) used S<=2/R>4 — do not mix.
+    source_document: EUCAST Clinical Breakpoint Tables
+    source_version: "16.1 (valid from 2026-06-24)"
+    source_url: https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+    accessed: 2026-07-19
+  cefotaxime:
+    standard: EUCAST
+    standard_year: 2026
+    s_max_mg_l: 1             # "Cefotaxime (indications other than meningitis)": S <= 1
+    r_min_mg_l: 2             # R > 2 (MIC 2 = I, not binary)
+    # Separate "Cefotaxime (meningitis)" row (S<=1/R>1) NOT used — BV-BRC
+    # rows carry no indication, so the general (non-meningitis) row applies.
+    source_document: EUCAST Clinical Breakpoint Tables
+    source_version: "16.1 (valid from 2026-06-24)"
+    source_url: https://www.eucast.org/fileadmin/eucast/pdf/breakpoints/v_16.1_Breakpoint_Tables.xlsx
+    accessed: 2026-07-19
+
+# No breakpoint entries yet for these species: every MIC-parseable drug is
+# skipped and listed in the audit. Add placeholders here when needed.
+kpneumoniae: {}
+ngonorrhoeae: {}

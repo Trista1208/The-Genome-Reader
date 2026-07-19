@@ -1,5 +1,11 @@
-# Large downloaded data (re-fetch with scripts/)
+# --- data (large, regenerable via pull scripts) ---
 data/raw/
+data/genomes/
+data/labels_*.csv
+data/genome_ids_*.txt
+data/failed.txt
+data/clean/
+data/smoke_*.tsv
 
 # Keep processed cohort manifests in git; ignore other processed outputs
 data/processed/*
@@ -9,13 +15,29 @@ data/processed/cohort/*
 !data/processed/cohort/genome_list.txt
 !data/processed/cohort/genome_antibiotic_labels.tsv
 
+# --- features / models / reports (regenerable) ---
+features/*.tsv
+features/feature_matrix.csv
+models/
+reports/
+
+# --- sprint artifacts (large/regenerable) ---
+splits/skani_edges.tsv
+.tmp_sprint_genomes/
+splits/splits_run.log
+splits/skani_genomes.list
+
 tools/bin/
 .miniconda/
 
-__pycache__/
-*.py[cod]
+# --- python ---
 .venv/
 venv/
+__pycache__/
+*.py[cod]
+*.pyc
+
+# --- node / next ---
 .env
 .env.local
 .convex/
@@ -23,8 +45,7 @@ venv/
 node_modules/
 *.tsbuildinfo
 
-# OS / IDE
+# --- os / ide ---
 .DS_Store
 .idea/
 .vscode/
-node_modules

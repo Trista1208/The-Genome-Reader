@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --background: #14110f;
+  --foreground: #f7f5f2;
+  --muted: #9a938c;
+  --accent: #dc2626;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ---- animations the hero-futuristic component relies on ---- */
+@keyframes fade-in-word {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+.fade-in {
+  animation: fade-in-word 0.7s cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+@keyframes fade-in-sub {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-subtitle {
+  animation: fade-in-sub 0.9s ease-out both;
+}
+
+/* ---- explore button (referenced but undefined in the source component) ---- */
+.explore-btn {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(247, 245, 242, 0.25);
+  color: #f7f5f2;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.9rem 1.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0;
+  animation: fade-in-sub 0.8s ease-out forwards;
+  transition: border-color 0.25s, background 0.25s;
+}
+.explore-btn:hover {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.12);
+}
+.explore-arrow {
+  display: inline-flex;
+  animation: bob 1.8s ease-in-out infinite;
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
