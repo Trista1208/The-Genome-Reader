@@ -1,0 +1,37 @@
+{
+  "name": "the-genome-reader",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  },
+  "dependencies": {
+    "@paper-design/shaders": "^0.0.77",
+    "@paper-design/shaders-react": "^0.0.77",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "clsx": "^2.1.1",
+    "convex": "^1.42.3",
+    "lucide-react": "^1.25.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^3.6.0",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.185.1",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.2.10",
+    "typescript": "^5.9.3"
+  }
+}

@@ -6,6 +6,45 @@
 
 **Scope:** this repo is **backend only**. Module 03 UI lives in [`frontend/`](frontend/README.md) and consumes [`specs/prediction_api.schema.json`](specs/prediction_api.schema.json).
 
+## Product prototype
+
+The product surface is a Next.js App Router application backed by Convex. It validates an assembled FASTA in the browser, uploads it directly to Convex storage, invokes the Genome Firewall inference service (AMRFinderPlus + trained models) from a Convex action, and stores an analysis audit record. A local simulation mode keeps the entire interface usable before cloud services are configured.
+
+The original 15-second DNA → feature tokens → neural classifier animation is integrated into the inference state. The score is never revealed before the complete sequence has played.
+
+### Run locally
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). With an empty `NEXT_PUBLIC_CONVEX_URL`, choose **Use demo sequence** to exercise the complete local flow.
+
+### Connect Convex and the inference service
+
+Deploy the Genome Firewall inference service (see [`inference/`](inference/)) and
+point Convex at it:
+
+```bash
+npm run convex:dev
+npx convex env set INFERENCE_API_URL https://your-inference-host
+npx convex env set INFERENCE_API_TOKEN <optional-shared-secret>   # optional
+```
+
+The Convex CLI writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` to `.env.local`. Restart Next.js after that change. The service takes an uploaded FASTA, runs AMRFinderPlus + the trained models, and returns a real prediction. The request/response contract is documented in [`convex/README.md`](convex/README.md); the service itself in [`inference/README.md`](inference/README.md).
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the Next.js development server |
+| `npm run convex:dev` | Run Convex code generation and backend sync |
+| `npm run typecheck` | Check application TypeScript |
+| `npm run lint` | Run the Next.js ESLint rules |
+| `npm run build` | Create a production build |
+
 **Repo:** [Trista1208/The-Genome-Reader](https://github.com/Trista1208/The-Genome-Reader)
 
 ---

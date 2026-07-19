@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic>=2
+python-multipart
+pandas
+numpy
+scikit-learn==1.9.0
+skops
+huggingface_hub
+pyyaml

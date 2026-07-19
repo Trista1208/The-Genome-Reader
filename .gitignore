@@ -17,6 +17,11 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.local
+.convex/
+.next/
+node_modules/
+*.tsbuildinfo
 
 # OS / IDE
 .DS_Store

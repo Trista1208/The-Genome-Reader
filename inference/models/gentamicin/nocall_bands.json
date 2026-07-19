@@ -1,0 +1,12 @@
+{
+ "q_susceptible": 0.3730737420368335,
+ "q_resistant": 0.9773662332860241,
+ "alpha_susceptible": 0.02,
+ "alpha_resistant": 0.1,
+ "dist_threshold": 64.28759999999957,
+ "dist_quantile": 0.99,
+ "band": [
+  0.022633766713975878,
+  0.3730737420368335
+ ]
+}
