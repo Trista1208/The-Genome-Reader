@@ -10,4 +10,4 @@ now implement all of this, and include the animation that we have for after the 
 and is waiting for infarance, and make sure that the whole animation has gone through.
 
 The design should be clean and black and white,
-we should use a sleek font like
+we should use a sleek font like switzer the one I added to the Fonts folder

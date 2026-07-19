@@ -22,6 +22,7 @@
   let elapsed = isFrozenPreview ? normalizeTime(requestedTime) : prefersReducedMotion ? 12.2 : 0;
   let lastFrame = performance.now();
   let lastRender = lastFrame;
+  let running = false;
   const pointer = { x: -9999, y: -9999 };
 
   const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
@@ -350,11 +351,15 @@
     const delta = Math.min((now - lastFrame) / 1000, .08);
     lastFrame = now;
     lastRender = now;
-    if (!prefersReducedMotion && !isFrozenPreview) {
-      elapsed = mod(elapsed + delta, LOOP_DURATION);
+    if (!prefersReducedMotion && !isFrozenPreview && running) {
+      elapsed += delta;
+      if (elapsed >= LOOP_DURATION) {
+        elapsed = LOOP_DURATION - .001;
+        running = false;
+      }
     }
     render(elapsed);
-    if (!prefersReducedMotion && !isFrozenPreview) requestAnimationFrame(animate);
+    if (!prefersReducedMotion && !isFrozenPreview && running) requestAnimationFrame(animate);
   }
 
   window.addEventListener("pointermove", (event) => {
@@ -371,7 +376,17 @@
     resize();
     render(elapsed);
   });
+  const restart = () => {
+    elapsed = prefersReducedMotion ? 12.2 : 0;
+    lastFrame = performance.now();
+    lastRender = lastFrame;
+    const wasRunning = running;
+    running = !prefersReducedMotion && !isFrozenPreview;
+    render(elapsed);
+    if (running && !wasRunning) requestAnimationFrame(animate);
+  };
+  window.GenomeSequenceAnimation = { restart };
+  window.addEventListener("genome:restart-animation", restart);
   resize();
   render(elapsed);
-  if (!prefersReducedMotion && !isFrozenPreview) requestAnimationFrame(animate);
 })();

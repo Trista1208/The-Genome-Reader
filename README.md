@@ -4,17 +4,41 @@
 
 > Turn a reconstructed bacterial genome (FASTA) into features an AI model can use to predict antibiotic response — before standard lab results arrive.
 
-## Sequence visualization
+## Product prototype
 
-The repository includes a self-contained, dependency-free frontend concept in `index.html`. A continuous 15-second animation shows a shaded 3D DNA double helix spinning, moving left, dissolving into glowing fragments that enter the first model layer, and revealing a dense side-view compression neural network on a pure black background.
+The product surface is a Next.js App Router application backed by Convex. It validates an assembled FASTA in the browser, uploads it directly to Convex storage, invokes a private Hugging Face inference endpoint from a Convex action, and stores an analysis audit record. A local simulation mode keeps the entire interface usable before cloud services are configured.
 
-Run it locally with:
+The original 15-second DNA → feature tokens → neural classifier animation is integrated into the inference state. The score is never revealed before the complete sequence has played.
+
+### Run locally
 
 ```bash
-python3 -m http.server 4173
+npm install
+cp .env.example .env.local
+npm run dev
 ```
 
-Then open [http://localhost:4173](http://localhost:4173). It is illustrative only and includes no model prediction or clinical decision.
+Open [http://localhost:3000](http://localhost:3000). With an empty `NEXT_PUBLIC_CONVEX_URL`, choose **Use demo sequence** to exercise the complete local flow.
+
+### Connect Convex and Hugging Face
+
+```bash
+npm run convex:dev
+npx convex env set HUGGINGFACE_ENDPOINT_URL https://your-endpoint.endpoints.huggingface.cloud
+npx convex env set HUGGINGFACE_TOKEN hf_your_token
+```
+
+The Convex CLI writes `NEXT_PUBLIC_CONVEX_URL` and `CONVEX_DEPLOYMENT` to `.env.local`. Restart Next.js after that change. The endpoint request and response contracts are documented in [`convex/README.md`](convex/README.md).
+
+### Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the Next.js development server |
+| `npm run convex:dev` | Run Convex code generation and backend sync |
+| `npm run typecheck` | Check application TypeScript |
+| `npm run lint` | Run the Next.js ESLint rules |
+| `npm run build` | Create a production build |
 
 **Repo:** [Trista1208/The-Genome-Reader](https://github.com/Trista1208/The-Genome-Reader)
 
