@@ -55,4 +55,8 @@ reported separately for seen clusters vs heldout_group.
   Intermediate/uncertain excluded from binary training but counted in reports.
 - Python: each area has its own `.venv` (no conda on this machine).
 - Bioinformatics CLIs run in Docker (`--platform linux/amd64` if needed); nothing installs system-wide.
-- No git commits, no network writes beyond public BV-BRC / NCBI downloads. No API keys in files.
+- **Git: work happens on branches, never directly on `main`.** Branch naming:
+  `prep/data-pipeline`, `prep/amr-features`, `prep/model-pipeline`, `demo/report-app`.
+  Merge to `main` via review when a workstream is green. Data and regenerable outputs
+  stay out of git (see .gitignore); code, configs, and docs go in.
+- No network writes beyond public BV-BRC / NCBI downloads. No API keys in files.
