@@ -216,6 +216,13 @@ button { cursor: pointer; }
 .stage-rail .complete i { border-color: var(--signal); background: var(--signal); box-shadow: 0 0 8px rgba(215,255,67,.5); }
 .processing-warning { margin: 0; color: #565653; font-size: 8px; line-height: 1.45; }
 
+.run-error-state { position: absolute; z-index: 4; inset: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 42px; background: radial-gradient(circle at 25% 50%, rgba(245,160,111,.06), transparent 34%), #070707; }
+.run-error-state > span { margin-bottom: 16px; color: #f5a06f; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 8px; letter-spacing: .17em; }
+.run-error-state h3 { max-width: 440px; margin: 0 0 13px; font-family: var(--font-panchang), var(--font-switzer), sans-serif; font-size: clamp(24px, 2.7vw, 38px); font-weight: 520; line-height: 1.08; letter-spacing: -.035em; }
+.run-error-state p { max-width: 440px; margin: 0 0 24px; color: #898985; font-size: 11px; line-height: 1.55; }
+.run-error-state button { min-height: 38px; padding: 0 17px; color: #f5f5f0; border: 1px solid rgba(245,245,240,.38); border-radius: 100px; background: transparent; font-size: 8px; letter-spacing: .11em; }
+.run-error-state button:hover { color: #050505; background: #f5f5f0; }
+
 .result-state { position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; padding: 20px 24px 18px; animation: result-in .85s cubic-bezier(.16,1,.3,1) both; background: radial-gradient(circle at 23% 45%, rgba(255,255,255,.05), transparent 27%); }
 .result-stamp { display: flex; justify-content: space-between; color: #747470; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 7px; letter-spacing: .13em; }
 .result-stamp span:first-child { color: var(--signal); }

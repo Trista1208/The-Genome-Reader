@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 import { anyApi } from "convex/server";
 import { useAction, useMutation } from "convex/react";
 import {
@@ -14,6 +15,7 @@ import {
 } from "react";
 import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
 import { formatBases, validateFasta, type FastaSummary } from "@/lib/fasta";
+import { useGenomeAnalysisSession } from "@/components/genome-analysis-session";
 import { ShaderAnimation } from "@/components/ui/shader-lines";
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
@@ -40,12 +42,16 @@ declare global {
   }
 }
 
-export function GenomeReaderApp({ convexEnabled }: { convexEnabled: boolean }) {
-  if (convexEnabled) return <ConnectedGenomeReader />;
-  return <GenomeReader runInference={runDemoInference} />;
+export function GenomeReaderApp() {
+  return <GenomeReader />;
 }
 
-function ConnectedGenomeReader() {
+export function GenomeAnalysisRunApp({ convexEnabled }: { convexEnabled: boolean }) {
+  if (convexEnabled) return <ConnectedGenomeAnalysisRun />;
+  return <GenomeAnalysisRun runInference={runDemoInference} />;
+}
+
+function ConnectedGenomeAnalysisRun() {
   const generateUploadUrl = useMutation(anyApi.files.generateUploadUrl);
   const runModel = useAction(anyApi.analysis.runInference);
 
@@ -70,7 +76,7 @@ function ConnectedGenomeReader() {
     [generateUploadUrl, runModel],
   );
 
-  return <GenomeReader runInference={runInference} />;
+  return <GenomeAnalysisRun runInference={runInference} />;
 }
 
 async function runDemoInference(
@@ -85,28 +91,19 @@ async function runDemoInference(
   return { ...DEMO_RESULT, sequenceLength: summary.bases, contigCount: summary.contigs };
 }
 
-function GenomeReader({ runInference }: { runInference: RunInference }) {
+function GenomeReader() {
+  const router = useRouter();
+  const { beginAnalysis } = useGenomeAnalysisSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<FastaSummary | null>(null);
   const [antibiotic, setAntibiotic] = useState<Antibiotic>(ANTIBIOTICS[0]);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState("");
-  const [stageIndex, setStageIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-
-  useEffect(() => {
-    if (phase !== "processing") return;
-    const timers = PROCESSING_STAGES.slice(1).map((stage, index) =>
-      window.setTimeout(() => setStageIndex(index + 1), stage.at),
-    );
-    return () => timers.forEach(window.clearTimeout);
-  }, [phase]);
 
   const acceptFile = useCallback(async (candidate: File) => {
     setError("");
-    setResult(null);
     try {
       const nextSummary = await validateFasta(candidate);
       setFile(candidate);
@@ -120,34 +117,16 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
     }
   }, []);
 
-  const startAnalysis = async () => {
+  const startAnalysis = () => {
     if (!file || !summary) return;
-    setError("");
-    setResult(null);
-    setStageIndex(0);
-    setPhase("processing");
-    if (window.GenomeSequenceAnimation) window.GenomeSequenceAnimation.restart();
-    else window.dispatchEvent(new Event("genome:restart-animation"));
-
-    try {
-      const sequenceDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1_200 : 15_250;
-      const minimumSequence = new Promise<void>((resolve) => window.setTimeout(resolve, sequenceDuration));
-      const inference = runInference(file, antibiotic, () => setStageIndex((current) => Math.max(current, 1)));
-      const [nextResult] = await Promise.all([inference, minimumSequence]);
-      setResult(nextResult);
-      setPhase("complete");
-    } catch (inferenceError) {
-      setError(inferenceError instanceof Error ? inferenceError.message : "The inference endpoint did not return a valid result.");
-      setPhase("error");
-    }
+    beginAnalysis({ file, summary, antibiotic, runId: Date.now() });
+    router.push("/analyze/run");
   };
 
   const reset = () => {
     setFile(null);
     setSummary(null);
-    setResult(null);
     setError("");
-    setStageIndex(0);
     setPhase("idle");
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -163,9 +142,6 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
     const dropped = event.dataTransfer.files[0];
     if (dropped) void acceptFile(dropped);
   };
-
-  const stage = PROCESSING_STAGES[stageIndex];
-  const showingOutput = phase === "processing" || phase === "complete";
 
   const statusLabel = phase === "error" ? "Input error" : file ? "Ready to analyze" : "Awaiting sequence";
 
@@ -188,7 +164,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
         <p><span>GENOMIC RESPONSE CHECK</span><b>01 / FASTA</b></p>
       </header>
 
-      <section className={`analysis-page ${showingOutput ? "is-output" : "is-input"}`}>
+      <section className="analysis-page is-input">
         <div className="analysis-intro">
           <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
           <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
@@ -199,8 +175,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
           </div>
         </div>
 
-        <section className={`analysis-workspace ${showingOutput ? "workspace-output" : "workspace-input"} phase-${phase}`} aria-label="Genome analysis workspace">
-        {!showingOutput ? (
+        <section className={`analysis-workspace workspace-input phase-${phase}`} aria-label="Genome analysis workspace">
         <article className="reader-card input-panel">
           <header className="reader-card-header">
             <span className="reader-step">01</span>
@@ -276,28 +251,134 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
             {error ? <p className="error-message" role="alert"><span>!</span>{error}</p> : null}
           </div>
         </article>
-        ) : (
-        <article className="reader-card output-panel">
-          <PanelHeader
-            index="B"
-            title="Model output"
-            meta={phase === "processing" ? `${stage.code} / ANALYSIS ACTIVE` : result?.modelVersion ?? "AWAITING INPUT"}
-          />
-          <div className="panel-body output-body">
-            <canvas
-              id="sequence-canvas"
-              className={phase === "processing" ? "is-visible" : ""}
-              aria-label="DNA sequence dissolving into a neural classifier network"
-            />
-            <Script src="/sequence-animation.js" strategy="afterInteractive" />
+        </section>
+      </section>
 
-            {phase === "processing" ? <ProcessingState stage={stage} stageIndex={stageIndex} /> : null}
-            {phase === "complete" && result ? (
-              <ResultState result={result} antibiotic={antibiotic} fileName={file?.name ?? "Sequence"} onReset={reset} />
-            ) : null}
+      <footer className="footer-note">
+        <p><strong>RESEARCH PROTOTYPE</strong> — Decision support only. Confirm every result with standard laboratory susceptibility testing.</p>
+        <span>DEFENSIVE BY CONSTRUCTION / HUMAN OVERSIGHT REQUIRED</span>
+      </footer>
+    </main>
+  );
+}
+
+function GenomeAnalysisRun({ runInference }: { runInference: RunInference }) {
+  const router = useRouter();
+  const { pending, clearAnalysis } = useGenomeAnalysisSession();
+  const [phase, setPhase] = useState<"processing" | "complete" | "error">("processing");
+  const [stageIndex, setStageIndex] = useState(0);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!pending) {
+      router.replace("/analyze");
+      return;
+    }
+
+    let active = true;
+    const timers = PROCESSING_STAGES.slice(1).map((stage, index) =>
+      window.setTimeout(() => {
+        if (active) setStageIndex(index + 1);
+      }, stage.at),
+    );
+
+    const execute = async () => {
+      try {
+        const sequenceDuration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1_200 : 15_250;
+        const minimumSequence = new Promise<void>((resolve) => window.setTimeout(resolve, sequenceDuration));
+        const inference = runInference(pending.file, pending.antibiotic, () => {
+          if (active) setStageIndex((current) => Math.max(current, 1));
+        });
+        const [nextResult] = await Promise.all([inference, minimumSequence]);
+        if (!active) return;
+        setResult(nextResult);
+        setPhase("complete");
+      } catch (inferenceError) {
+        if (!active) return;
+        setError(inferenceError instanceof Error ? inferenceError.message : "The inference endpoint did not return a valid result.");
+        setPhase("error");
+      }
+    };
+
+    void execute();
+    return () => {
+      active = false;
+      timers.forEach(window.clearTimeout);
+    };
+  }, [pending, router, runInference]);
+
+  if (!pending) return <main className="app-shell" aria-label="Returning to genome upload" />;
+
+  const stage = PROCESSING_STAGES[stageIndex];
+  const startOver = () => {
+    clearAnalysis();
+    router.push("/analyze");
+  };
+
+  return (
+    <main className={`app-shell phase-shell-${phase}`}>
+      <div className="split-shader-field" aria-hidden="true">
+        <div className="split-shader-panel split-shader-left">
+          <ShaderAnimation pattern="flow" speed={0.88} />
+        </div>
+        <div className="split-shader-panel split-shader-right">
+          <ShaderAnimation pattern="flow" timeOffset={7.5} speed={1.08} />
+        </div>
+      </div>
+
+      <header className="analysis-header">
+        <Link className="analysis-brand" href="/" aria-label="Breakpoint home">
+          <span aria-hidden="true">B</span>
+          <strong>BREAKPOINT</strong>
+        </Link>
+        <p><span>GENOMIC RESPONSE CHECK</span><b>02 / MODEL RUN</b></p>
+      </header>
+
+      <section className="analysis-page is-output">
+        <div className="analysis-intro">
+          <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
+          <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
+          <p className="analysis-description">Run an assembled bacterial genome through the response model to estimate whether the selected antibiotic is likely to work.</p>
+          <div className="analysis-specs" aria-label="Analysis details">
+            <span><b>FILE</b> {pending.file.name}</span>
+            <span><b>TARGET</b> {pending.antibiotic}</span>
           </div>
-        </article>
-        )}
+        </div>
+
+        <section className={`analysis-workspace workspace-output phase-${phase}`} aria-label="Genome model processing">
+          <article className="reader-card output-panel">
+            <PanelHeader
+              index="B"
+              title="Model output"
+              meta={phase === "processing" ? `${stage.code} / ANALYSIS ACTIVE` : result?.modelVersion ?? "ANALYSIS ERROR"}
+            />
+            <div className="panel-body output-body">
+              <canvas
+                id="sequence-canvas"
+                className={phase === "processing" ? "is-visible" : ""}
+                aria-label="DNA sequence dissolving into a neural classifier network"
+              />
+              <Script
+                src={`/sequence-animation.js?run=${pending.runId}`}
+                strategy="afterInteractive"
+                onReady={() => window.GenomeSequenceAnimation?.restart()}
+              />
+
+              {phase === "processing" ? <ProcessingState stage={stage} stageIndex={stageIndex} /> : null}
+              {phase === "complete" && result ? (
+                <ResultState result={result} antibiotic={pending.antibiotic} fileName={pending.file.name} onReset={startOver} />
+              ) : null}
+              {phase === "error" ? (
+                <div className="run-error-state" role="alert">
+                  <span>ANALYSIS INTERRUPTED</span>
+                  <h3>The model run could not be completed.</h3>
+                  <p>{error}</p>
+                  <button type="button" onClick={startOver}>RETURN TO UPLOAD</button>
+                </div>
+              ) : null}
+            </div>
+          </article>
         </section>
       </section>
 
