@@ -1,0 +1,43 @@
+{
+  "name": "numpy",
+  "version": "2.4.6",
+  "build": "py311h9606935_0",
+  "build_number": 0,
+  "channel": "https://repo.anaconda.com/pkgs/main/win-64",
+  "subdir": "win-64",
+  "fn": "numpy-2.4.6-py311h9606935_0.conda",
+  "md5": "c7a468be5fa43695fc3c71ab67ddd5e7",
+  "url": "https://repo.anaconda.com/pkgs/main/win-64/numpy-2.4.6-py311h9606935_0.conda",
+  "sha256": "516faa48c910be664d5258eeb0129162eeb6e3463754ac7ab68cc8ed129c428c",
+  "depends": [
+    "blas * mkl",
+    "mkl >=2025.0.0,<2026.0a0",
+    "mkl-service >=2.3.0,<3.0a0",
+    "mkl_fft",
+    "mkl_random",
+    "numpy-base 2.4.6 py311h89dd80d_0",
+    "python >=3.11,<3.12.0a0",
+    "ucrt >=10.0.20348.0",
+    "vc >=14.3,<15",
+    "vc14_runtime >=14.44.35208"
+  ],
+  "constrains": [],
+  "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+  "timestamp": 1780346387000,
+  "size": 19927,
+  "requested_spec": "numpy",
+  "package_tarball_full_path": "C:\\Users\\LEGION\\miniconda3\\pkgs\\numpy-2.4.6-py311h9606935_0.conda",
+  "extracted_package_dir": "C:\\Users\\LEGION\\miniconda3\\pkgs\\numpy-2.4.6-py311h9606935_0",
+  "files": [],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": []
+  },
+  "link": {
+    "source": "C:\\Users\\LEGION\\miniconda3\\pkgs\\numpy-2.4.6-py311h9606935_0",
+    "type": 1
+  },
+  "requested_specs": [
+    "numpy"
+  ]
+}

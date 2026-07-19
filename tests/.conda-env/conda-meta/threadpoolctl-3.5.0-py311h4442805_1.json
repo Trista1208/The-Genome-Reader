@@ -1,0 +1,105 @@
+{
+  "name": "threadpoolctl",
+  "version": "3.5.0",
+  "build": "py311h4442805_1",
+  "build_number": 1,
+  "channel": "https://repo.anaconda.com/pkgs/main/win-64",
+  "subdir": "win-64",
+  "fn": "threadpoolctl-3.5.0-py311h4442805_1.conda",
+  "md5": "d24c4872b7b14fec2c629f9120e4b5d0",
+  "url": "https://repo.anaconda.com/pkgs/main/win-64/threadpoolctl-3.5.0-py311h4442805_1.conda",
+  "sha256": "f6d6de5157cc18e99e559e6b2ab3856fc7388d60c599b0d7ddefa5078b9c42ab",
+  "depends": [
+    "python >=3.11,<3.12.0a0"
+  ],
+  "constrains": [],
+  "license": "BSD-3-Clause",
+  "timestamp": 1764361824000,
+  "size": 49973,
+  "_requested_specs": [],
+  "package_tarball_full_path": "C:\\Users\\LEGION\\miniconda3\\pkgs\\threadpoolctl-3.5.0-py311h4442805_1.conda",
+  "extracted_package_dir": "C:\\Users\\LEGION\\miniconda3\\pkgs\\threadpoolctl-3.5.0-py311h4442805_1",
+  "files": [
+    "Lib/site-packages/__pycache__/threadpoolctl.cpython-311.pyc",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/INSTALLER",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/METADATA",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/RECORD",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/REQUESTED",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/WHEEL",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/direct_url.json",
+    "Lib/site-packages/threadpoolctl-3.5.0.dist-info/licenses/LICENSE",
+    "Lib/site-packages/threadpoolctl.py"
+  ],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": [
+      {
+        "_path": "Lib/site-packages/__pycache__/threadpoolctl.cpython-311.pyc",
+        "path_type": "hardlink",
+        "sha256": "4009a7d5a209fe78d005b3ab2660887d97a9db32a5c7ec0eaac1afe908ad2189",
+        "size_in_bytes": 64235,
+        "sha256_in_prefix": "4009a7d5a209fe78d005b3ab2660887d97a9db32a5c7ec0eaac1afe908ad2189"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/INSTALLER",
+        "path_type": "hardlink",
+        "sha256": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8",
+        "size_in_bytes": 5,
+        "sha256_in_prefix": "d0edee15f91b406f3f99726e44eb990be6e34fd0345b52b910c568e0eef6a2a8"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/METADATA",
+        "path_type": "hardlink",
+        "sha256": "23fc69859663a5116fea850cef8647289f00a6c554c34cebfec0ace534695a79",
+        "size_in_bytes": 13872,
+        "sha256_in_prefix": "23fc69859663a5116fea850cef8647289f00a6c554c34cebfec0ace534695a79"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/RECORD",
+        "path_type": "hardlink",
+        "sha256": "3afe7394f1313456b289708f518467f139b7b9c3794c7583056593d80c06b774",
+        "size_in_bytes": 741,
+        "sha256_in_prefix": "3afe7394f1313456b289708f518467f139b7b9c3794c7583056593d80c06b774"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/REQUESTED",
+        "path_type": "hardlink",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size_in_bytes": 0,
+        "sha256_in_prefix": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/WHEEL",
+        "path_type": "hardlink",
+        "sha256": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db",
+        "size_in_bytes": 82,
+        "sha256_in_prefix": "1b68144734c4b66791f27add5d425f3620775585718a03d0f9b110ba3a4d88db"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/direct_url.json",
+        "path_type": "hardlink",
+        "sha256": "43eb3ddb8d229c953a80f5a767cc57d6ed74354e8afbc34dbacd778eed0ff7fa",
+        "size_in_bytes": 91,
+        "sha256_in_prefix": "43eb3ddb8d229c953a80f5a767cc57d6ed74354e8afbc34dbacd778eed0ff7fa"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl-3.5.0.dist-info/licenses/LICENSE",
+        "path_type": "hardlink",
+        "sha256": "81ac619075248b06e53660b652d10e485f4675f5d0ae0f97ea22370da1f7e23b",
+        "size_in_bytes": 1507,
+        "sha256_in_prefix": "81ac619075248b06e53660b652d10e485f4675f5d0ae0f97ea22370da1f7e23b"
+      },
+      {
+        "_path": "Lib/site-packages/threadpoolctl.py",
+        "path_type": "hardlink",
+        "sha256": "f07b9a0efe634d128c829b57ae5a8ccf14ac4b236203bbbd6dc6fce2c99b55a3",
+        "size_in_bytes": 50023,
+        "sha256_in_prefix": "f07b9a0efe634d128c829b57ae5a8ccf14ac4b236203bbbd6dc6fce2c99b55a3"
+      }
+    ]
+  },
+  "link": {
+    "source": "C:\\Users\\LEGION\\miniconda3\\pkgs\\threadpoolctl-3.5.0-py311h4442805_1",
+    "type": 1
+  }
+}

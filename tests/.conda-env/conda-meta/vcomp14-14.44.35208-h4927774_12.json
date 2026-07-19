@@ -1,0 +1,53 @@
+{
+  "name": "vcomp14",
+  "version": "14.44.35208",
+  "build": "h4927774_12",
+  "build_number": 12,
+  "channel": "https://repo.anaconda.com/pkgs/main/win-64",
+  "subdir": "win-64",
+  "fn": "vcomp14-14.44.35208-h4927774_12.conda",
+  "md5": "16fc30ee65e8b6a5fca1367af03c9d31",
+  "url": "https://repo.anaconda.com/pkgs/main/win-64/vcomp14-14.44.35208-h4927774_12.conda",
+  "sha256": "67933d097691d529afc73ef8b2be2b91f9f2c9812e7218437cb87cf4e70b9f5e",
+  "depends": [
+    "_openmp_mutex * *_msvc",
+    "ucrt >=10.0.20348.0"
+  ],
+  "constrains": [
+    "vs2015_runtime 14.44.35208.* *_12"
+  ],
+  "license": "LicenseRef-MicrosoftVisualCpp2015-2022Runtime",
+  "timestamp": 1779209279000,
+  "size": 112782,
+  "_requested_specs": [],
+  "package_tarball_full_path": "C:\\Users\\LEGION\\miniconda3\\pkgs\\vcomp14-14.44.35208-h4927774_12.conda",
+  "extracted_package_dir": "C:\\Users\\LEGION\\miniconda3\\pkgs\\vcomp14-14.44.35208-h4927774_12",
+  "files": [
+    "Library/bin/vcomp140.dll",
+    "vcomp140.dll"
+  ],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": [
+      {
+        "_path": "Library/bin/vcomp140.dll",
+        "no_link": true,
+        "path_type": "hardlink",
+        "sha256": "e7e50211906ab1c6226a3133fda8d8c8e35a23a8b6c6133c9606601604680b85",
+        "size_in_bytes": 193184,
+        "sha256_in_prefix": "e7e50211906ab1c6226a3133fda8d8c8e35a23a8b6c6133c9606601604680b85"
+      },
+      {
+        "_path": "vcomp140.dll",
+        "path_type": "hardlink",
+        "sha256": "e7e50211906ab1c6226a3133fda8d8c8e35a23a8b6c6133c9606601604680b85",
+        "size_in_bytes": 193184,
+        "sha256_in_prefix": "e7e50211906ab1c6226a3133fda8d8c8e35a23a8b6c6133c9606601604680b85"
+      }
+    ]
+  },
+  "link": {
+    "source": "C:\\Users\\LEGION\\miniconda3\\pkgs\\vcomp14-14.44.35208-h4927774_12",
+    "type": 1
+  }
+}

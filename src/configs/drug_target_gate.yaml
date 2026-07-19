@@ -1,0 +1,23 @@
+version: 1
+species: Escherichia coli
+antibiotics:
+  ampicillin:
+    molecular_target: penicillin-binding proteins
+    supported_species: [Escherichia coli]
+    core_target_present_in_supported_species: true
+    target_presence_features: []
+  ciprofloxacin:
+    molecular_target: DNA gyrase and topoisomerase IV
+    supported_species: [Escherichia coli]
+    core_target_present_in_supported_species: true
+    target_presence_features: []
+  cefotaxime:
+    molecular_target: penicillin-binding proteins
+    supported_species: [Escherichia coli]
+    core_target_present_in_supported_species: true
+    target_presence_features: []
+  gentamicin:
+    molecular_target: bacterial 30S ribosomal subunit
+    supported_species: [Escherichia coli]
+    core_target_present_in_supported_species: true
+    target_presence_features: []

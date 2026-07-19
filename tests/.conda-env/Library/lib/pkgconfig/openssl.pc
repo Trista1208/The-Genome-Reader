@@ -1,0 +1,9 @@
+prefix=C:/Users/LEGION/.codex/visualizations/2026/07/18/019f7767-263f-7982-9b25-0337c96c5edf/Genome_Firewall_Model/.conda-env/Library 
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenSSL
+Description: Secure Sockets Layer and cryptography libraries and tools
+Requires: libssl libcrypto
+Version: 3.5.7 

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: 0BSD
+# Author: Lasse Collin
+
+prefix=C:/Users/LEGION/.codex/visualizations/2026/07/18/019f7767-263f-7982-9b25-0337c96c5edf/Genome_Firewall_Model/.conda-env/Library
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: liblzma
+Description: General purpose data compression library
+URL: https://tukaani.org/xz/
+Version: 5.8.2
+Cflags: -I${includedir}
+Cflags.private: -DLZMA_API_STATIC
+Libs: -L${libdir} -llzma
+Libs.private:  

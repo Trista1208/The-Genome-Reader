@@ -1,0 +1,55 @@
+==> 2026-07-19 04:22:56 <==
+# cmd: C:\Users\LEGION\miniconda3\Scripts\conda-script.py create -p .\.conda-env -y python=3.11 numpy pandas scipy scikit-learn joblib pyyaml pytest pip
+# conda version: 26.5.3
++defaults/noarch::pip-26.1.2-pyhc872135_0
++defaults/noarch::python-tzdata-2026.2-pyhd3eb1b0_0
++defaults/noarch::tzdata-2026c-he532380_0
++defaults/win-64::_openmp_mutex-2.0-52_msvc
++defaults/win-64::blas-1.0-mkl
++defaults/win-64::bzip2-1.0.8-h2bbff1b_6
++defaults/win-64::ca-certificates-2026.5.14-haa95532_0
++defaults/win-64::colorama-0.4.6-py311haa95532_0
++defaults/win-64::iniconfig-2.3.0-py311haa95532_0
++defaults/win-64::intel-openmp-2025.0.0-haa95532_1165
++defaults/win-64::joblib-1.5.3-py311haa95532_0
++defaults/win-64::libexpat-2.8.2-hd7fb8db_1
++defaults/win-64::libffi-3.4.8-h42d73b9_3
++defaults/win-64::libhwloc-2.12.1-default_hfa10c62_1000
++defaults/win-64::libiconv-1.18-hc89ec93_0
++defaults/win-64::libxml2-2.13.9-h6201b9f_0
++defaults/win-64::libzlib-1.3.2-h1c6eee0_0
++defaults/win-64::mkl-2025.0.0-h585ebfc_931
++defaults/win-64::mkl-service-2.7.2-py311h1b35211_0
++defaults/win-64::mkl_fft-2.2.0-py311h18b77b3_0
++defaults/win-64::mkl_random-1.4.1-py311hf6ff4c0_0
++defaults/win-64::narwhals-2.23.0-py311haa95532_0
++defaults/win-64::numpy-2.4.6-py311h9606935_0
++defaults/win-64::numpy-base-2.4.6-py311h89dd80d_0
++defaults/win-64::openssl-3.5.7-hbb43b14_0
++defaults/win-64::packaging-26.0-py311haa95532_0
++defaults/win-64::pandas-3.0.3-py311hf6ff4c0_0
++defaults/win-64::pluggy-1.6.0-py311haa95532_0
++defaults/win-64::pygments-2.20.0-py311haa95532_0
++defaults/win-64::pytest-9.0.3-py311haa95532_0
++defaults/win-64::python-3.11.15-hb00fc5c_1
++defaults/win-64::python-dateutil-2.9.0post0-py311haa95532_2
++defaults/win-64::pyyaml-6.0.3-py311hb9a58be_0
++defaults/win-64::scikit-learn-1.9.0-py311h6c0dd63_0
++defaults/win-64::scipy-1.17.1-py311h97a0a95_1
++defaults/win-64::setuptools-83.0.0-py311haa95532_0
++defaults/win-64::six-1.17.0-py311haa95532_0
++defaults/win-64::sqlite-3.53.2-hee5a0db_0
++defaults/win-64::tbb-2022.3.0-h90c84d6_0
++defaults/win-64::tbb-devel-2022.3.0-h90c84d6_0
++defaults/win-64::threadpoolctl-3.5.0-py311h4442805_1
++defaults/win-64::tk-8.6.15-hf199647_0
++defaults/win-64::ucrt-10.0.22621.0-haa95532_0
++defaults/win-64::vc-14.3-h2df5915_12
++defaults/win-64::vc14_runtime-14.44.35208-h4927774_12
++defaults/win-64::vcomp14-14.44.35208-h4927774_12
++defaults/win-64::vs2015_runtime-14.44.35208-ha6b5a95_12
++defaults/win-64::wheel-0.47.0-py311haa95532_0
++defaults/win-64::xz-5.8.2-h53af0af_0
++defaults/win-64::yaml-0.2.5-he774522_0
++defaults/win-64::zlib-1.3.2-h1c6eee0_0
+# update specs: ['pandas', 'pytest', 'numpy', 'python=3.11', 'pip', 'scipy', 'joblib', 'pyyaml', 'scikit-learn']

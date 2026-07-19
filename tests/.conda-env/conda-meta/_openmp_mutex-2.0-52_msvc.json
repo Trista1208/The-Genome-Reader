@@ -1,0 +1,29 @@
+{
+  "name": "_openmp_mutex",
+  "version": "2.0",
+  "build": "52_msvc",
+  "build_number": 52,
+  "channel": "https://repo.anaconda.com/pkgs/main/win-64",
+  "subdir": "win-64",
+  "fn": "_openmp_mutex-2.0-52_msvc.conda",
+  "md5": "072c642d33aea93e81f3b8e14d7439a0",
+  "url": "https://repo.anaconda.com/pkgs/main/win-64/_openmp_mutex-2.0-52_msvc.conda",
+  "sha256": "5bd80c7e4e4b26a5bf4b5624e000b055fca47d5227886fe0b965cb006696aa1e",
+  "depends": [],
+  "constrains": [],
+  "license": "BSD-3-Clause",
+  "timestamp": 1779131148000,
+  "size": 6542,
+  "_requested_specs": [],
+  "package_tarball_full_path": "C:\\Users\\LEGION\\miniconda3\\pkgs\\_openmp_mutex-2.0-52_msvc.conda",
+  "extracted_package_dir": "C:\\Users\\LEGION\\miniconda3\\pkgs\\_openmp_mutex-2.0-52_msvc",
+  "files": [],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": []
+  },
+  "link": {
+    "source": "C:\\Users\\LEGION\\miniconda3\\pkgs\\_openmp_mutex-2.0-52_msvc",
+    "type": 1
+  }
+}
