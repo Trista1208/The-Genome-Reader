@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 const classificationValidator = v.union(
   v.literal("likely_effective"),
@@ -94,8 +95,8 @@ export const runInference = action({
   },
   handler: async (ctx, args) => {
     const { patient, ...analysisArgs } = args;
-    const patientRef = await ctx.runMutation(internal.patients.upsertPatient, patient);
-    const analysisId = await ctx.runMutation(internal.analysis.createPending, {
+    const patientRef: Id<"patients"> = await ctx.runMutation(internal.patients.upsertPatient, patient);
+    const analysisId: Id<"analyses"> = await ctx.runMutation(internal.analysis.createPending, {
       ...analysisArgs,
       patientRef,
     });

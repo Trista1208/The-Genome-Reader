@@ -1,3 +1,13 @@
+---
+title: Genome Firewall Inference
+emoji: 🧬
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # Genome Firewall inference service
 
 FASTA → antibiotic-response prediction. This is the service the Convex action

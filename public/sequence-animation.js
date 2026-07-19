@@ -4,6 +4,13 @@
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const LOOP_DURATION = 15;
+  // Once the intro has played through to here the DNA has dissolved and the
+  // classifier network is fully revealed (the "calibrating" state). We freeze
+  // the structural timeline at this point and hold — keeping the synapse pulses
+  // flowing on a separate, ever-advancing clock — until the app signals the
+  // result has arrived. Kept just below SEQUENCE_END so the end fade-out never
+  // begins while holding.
+  const HOLD_TIME = 13.9;
   const SEQUENCE_START = .75;
   const SEQUENCE_END = 14.2;
   const SPIN_END = 5.1;
@@ -258,7 +265,7 @@
     context.restore();
   }
 
-  function drawNetwork(time, network) {
+  function drawNetwork(time, network, flowTime = time) {
     const { layers, reveal } = network;
 
     for (let layerIndex = 0; layerIndex < layers.length - 1; layerIndex += 1) {
@@ -274,7 +281,7 @@
         const activation = Math.max(baseActivation, hover);
         line(from, to, connectionAlpha * (.045 + activation * .135), .52 + activation * .48, activation > .76 ? WHITE : "124,124,122");
         if (selector === 0 && (from.nodeIndex + layerIndex) % 3 === 0 && activation > .1) {
-          const travel = mod(time * 1.32 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
+          const travel = mod(flowTime * 1.32 + layerIndex * .17 + selector * .29 + from.nodeIndex * .07, 1);
           const pulse = { x: lerp(from.x, to.x, travel), y: lerp(from.y, to.y, travel) };
           const tail = { x: lerp(from.x, to.x, clamp(travel - .055)), y: lerp(from.y, to.y, clamp(travel - .055)) };
           line(tail, pulse, connectionAlpha * activation * .72, 1.3, WHITE);
