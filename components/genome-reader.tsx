@@ -14,6 +14,7 @@ import {
 import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
 import { formatBases, validateFasta, type FastaSummary } from "@/lib/fasta";
 import { LiquidTitle } from "@/components/liquid-title";
+import { AsciiRenderer } from "@/components/ui/ascii-renderer";
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
 
@@ -164,6 +165,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
   };
 
   const stage = PROCESSING_STAGES[stageIndex];
+  const showingOutput = phase === "processing" || phase === "complete";
 
   return (
     <main className="app-shell">
@@ -172,7 +174,8 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
         <LiquidTitle />
       </section>
 
-      <section className={`analysis-workspace phase-${phase}`} aria-label="Genome analysis workspace">
+      <section className={`analysis-workspace ${showingOutput ? "workspace-output" : "workspace-input"} phase-${phase}`} aria-label="Genome analysis workspace">
+        {!showingOutput ? (
         <article className="industrial-panel input-panel">
           <PanelHeader index="A" title="Genome workbook" meta="READ ONLY / FASTA" />
 
@@ -185,6 +188,9 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
               onDrop={onDrop}
               data-testid="dropzone"
             >
+              <div className="sheet-dna-backdrop" aria-hidden="true">
+                <AsciiRenderer variant="backdrop" />
+              </div>
               <input
                 ref={inputRef}
                 id="fasta-file"
@@ -200,8 +206,8 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
               <div className="sheet-menubar">
                 <span>FILE</span><span>EDIT</span><span>VIEW</span><span>INSERT</span><span>DATA</span>
                 <div className="sheet-actions">
-                  {file && phase !== "processing" ? <button type="button" onClick={reset}>NEW</button> : null}
-                  <button type="button" onClick={() => inputRef.current?.click()} disabled={phase === "processing"}>OPEN FILE</button>
+                  {file ? <button type="button" onClick={reset}>NEW</button> : null}
+                  <button type="button" onClick={() => inputRef.current?.click()}>OPEN FILE</button>
                 </div>
               </div>
               <div className="sheet-formula">
@@ -222,7 +228,6 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
                     id="antibiotic"
                     value={antibiotic}
                     onChange={(event) => setAntibiotic(event.target.value as Antibiotic)}
-                    disabled={phase === "processing"}
                     aria-label="Target antibiotic"
                   >
                     {ANTIBIOTICS.map((item) => <option key={item}>{item}</option>)}
@@ -232,7 +237,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
                 <span className="sheet-cell sheet-unit">MODEL INPUT</span>
                 <span className="sheet-row">6</span><span className="sheet-cell sheet-label">SYSTEM STATUS</span>
                 <span className={`sheet-cell sheet-value sheet-status status-${phase}`}>
-                  {phase === "processing" ? "INFERENCE RUNNING" : phase === "complete" ? "OUTPUT COMPLETE" : phase === "error" ? "INPUT ERROR" : file ? "READY" : "AWAITING FILE"}
+                  {phase === "error" ? "INPUT ERROR" : file ? "READY" : "AWAITING FILE"}
                 </span>
                 <span className="sheet-cell sheet-unit">{file ? "VALIDATED" : "EMPTY"}</span>
               </div>
@@ -245,24 +250,17 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
             <button
               className="primary-button"
               type="button"
-              disabled={!file || phase === "processing"}
-              onClick={phase === "complete" ? reset : startAnalysis}
+              disabled={!file}
+              onClick={startAnalysis}
               data-testid="analyze-button"
             >
-              <span>{phase === "processing" ? "Inference in progress" : phase === "complete" ? "Open new workbook" : "Run workbook analysis"}</span>
-              {phase === "processing" ? <span className="button-loader" /> : <ArrowIcon />}
+              <span>Run workbook analysis</span>
+              <ArrowIcon />
             </button>
             {error ? <p className="error-message" role="alert"><span>!</span>{error}</p> : null}
           </div>
         </article>
-
-        <div className="data-bus" aria-hidden="true">
-          <span className={`bus-node ${phase !== "idle" && phase !== "error" ? "active" : ""}`}>01</span>
-          <span className="bus-line"><i /></span>
-          <span className={`bus-node ${phase === "processing" || phase === "complete" ? "active" : ""}`}>02</span>
-          <span className="bus-caption">SECURE<br />PIPELINE</span>
-        </div>
-
+        ) : (
         <article className="industrial-panel output-panel">
           <PanelHeader
             index="B"
@@ -277,13 +275,13 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
             />
             <Script src="/sequence-animation.js" strategy="afterInteractive" />
 
-            {phase !== "processing" && phase !== "complete" ? <OutputStandby /> : null}
             {phase === "processing" ? <ProcessingState stage={stage} stageIndex={stageIndex} /> : null}
             {phase === "complete" && result ? (
-              <ResultState result={result} antibiotic={antibiotic} fileName={file?.name ?? "Sequence"} />
+              <ResultState result={result} antibiotic={antibiotic} fileName={file?.name ?? "Sequence"} onReset={reset} />
             ) : null}
           </div>
         </article>
+        )}
       </section>
 
       <footer className="footer-note">
@@ -300,17 +298,6 @@ function PanelHeader({ index, title, meta }: { index: string; title: string; met
       <div><span>{index}</span><h2>{title}</h2></div>
       <p>{meta}</p>
     </header>
-  );
-}
-
-function OutputStandby() {
-  return (
-    <div className="standby-state">
-      <div className="standby-orbit" aria-hidden="true"><span /><i /><b /></div>
-      <p>NO ANALYSIS IN PROGRESS</p>
-      <span>Validated model output will appear here</span>
-      <div className="standby-coordinates">X ——— Y<br />000.000 / 000.000</div>
-    </div>
   );
 }
 
@@ -335,10 +322,11 @@ function ProcessingState({ stage, stageIndex }: { stage: (typeof PROCESSING_STAG
   );
 }
 
-function ResultState({ result, antibiotic, fileName }: {
+function ResultState({ result, antibiotic, fileName, onReset }: {
   result: AnalysisResult;
   antibiotic: Antibiotic;
   fileName: string;
+  onReset: () => void;
 }) {
   const percent = Math.round(result.score * 100);
   const label = result.classification === "likely_effective"
@@ -354,7 +342,11 @@ function ResultState({ result, antibiotic, fileName }: {
 
   return (
     <div className="result-state">
-      <div className="result-stamp"><span>OUTPUT VALIDATED</span><span>{new Date().toISOString().slice(0, 10)}</span></div>
+      <div className="result-stamp">
+        <span>OUTPUT VALIDATED</span>
+        <button type="button" onClick={onReset}>NEW WORKBOOK</button>
+        <span>{new Date().toISOString().slice(0, 10)}</span>
+      </div>
       <div className="score-layout">
         <div className="score-ring" style={{ "--score": `${percent * 3.6}deg` } as React.CSSProperties}>
           <div><strong>{percent}</strong><span>%</span><small>RESPONSE<br />PROBABILITY</small></div>

@@ -6,27 +6,29 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
 import * as THREE from "three";
 
-export function AsciiRenderer() {
+export function AsciiRenderer({ variant = "hero" }: { variant?: "hero" | "backdrop" }) {
+  const isBackdrop = variant === "backdrop";
+
   return (
-    <div className="ascii-renderer" aria-hidden="true">
+    <div className={`ascii-renderer ${isBackdrop ? "ascii-renderer-backdrop" : ""}`} aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 0, 11.5], fov: 46 }}
+        camera={{ position: [0, 0, isBackdrop ? 10 : 11.5], fov: isBackdrop ? 42 : 46 }}
         dpr={[1, 1.35]}
-        gl={{ antialias: false, alpha: false }}
+        gl={{ antialias: false, alpha: isBackdrop }}
       >
-        <color attach="background" args={["#050505"]} />
+        {!isBackdrop ? <color attach="background" args={["#050505"]} /> : null}
         <ambientLight intensity={0.7} />
         <pointLight position={[6, 7, 8]} intensity={18} distance={24} />
         <directionalLight position={[-6, -4, 5]} intensity={1.8} />
-        <DnaHelix />
-        <OrbitControls enablePan={false} enableZoom={false} enableDamping dampingFactor={0.08} />
-        <Renderer />
+        <DnaHelix backdrop={isBackdrop} />
+        {!isBackdrop ? <OrbitControls enablePan={false} enableZoom={false} enableDamping dampingFactor={0.08} /> : null}
+        <Renderer transparent={isBackdrop} />
       </Canvas>
     </div>
   );
 }
 
-function DnaHelix() {
+function DnaHelix({ backdrop }: { backdrop: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
   const geometry = useMemo(() => {
     const pointsA: THREE.Vector3[] = [];
@@ -57,7 +59,7 @@ function DnaHelix() {
   });
 
   return (
-    <group ref={groupRef} scale={0.82} rotation={[0, 0, -0.08]}>
+    <group ref={groupRef} scale={backdrop ? 1.55 : 0.82} rotation={[0, 0, backdrop ? -1.05 : -0.08]}>
       <mesh>
         <tubeGeometry args={[geometry.strandA, 180, 0.105, 7, false]} />
         <meshStandardMaterial color="#f4f4ef" roughness={0.38} metalness={0.52} />
@@ -106,20 +108,24 @@ function Rung({ from, to }: { from: THREE.Vector3; to: THREE.Vector3 }) {
   );
 }
 
-function Renderer() {
+function Renderer({ transparent }: { transparent: boolean }) {
   const { gl, scene, camera, size } = useThree();
   const effectRef = useRef<AsciiEffect | null>(null);
 
   useEffect(() => {
-    const effect = new AsciiEffect(gl, " .,:;i1tfLCG08@", { invert: true });
+    const effect = new AsciiEffect(gl, " .,:;i1tfLCG08@", {
+      invert: true,
+      color: transparent,
+      alpha: transparent,
+    });
     const container = gl.domElement.parentElement;
     if (!container) return;
 
-    effect.domElement.className = "ascii-effect";
+    effect.domElement.className = `ascii-effect ${transparent ? "ascii-effect-backdrop" : ""}`;
     effect.domElement.style.position = "absolute";
     effect.domElement.style.inset = "0";
-    effect.domElement.style.color = "#e8e8e3";
-    effect.domElement.style.backgroundColor = "#050505";
+    effect.domElement.style.color = transparent ? "#a8a8a3" : "#e8e8e3";
+    effect.domElement.style.backgroundColor = transparent ? "transparent" : "#050505";
     effect.domElement.style.pointerEvents = "none";
     effect.domElement.style.overflow = "hidden";
     effect.domElement.style.zIndex = "2";
@@ -132,7 +138,7 @@ function Renderer() {
       effectRef.current = null;
       if (effect.domElement.parentNode === container) container.removeChild(effect.domElement);
     };
-  }, [camera, gl, scene, size.height, size.width]);
+  }, [camera, gl, scene, size.height, size.width, transparent]);
 
   useFrame(() => effectRef.current?.render(scene, camera), 1);
   return null;
