@@ -12,7 +12,7 @@ import {
   type DragEvent,
 } from "react";
 import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
-import { formatBases, makeDemoFasta, validateFasta, type FastaSummary } from "@/lib/fasta";
+import { formatBases, validateFasta, type FastaSummary } from "@/lib/fasta";
 import { LiquidTitle } from "@/components/liquid-title";
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
@@ -174,51 +174,71 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
 
       <section className={`analysis-workspace phase-${phase}`} aria-label="Genome analysis workspace">
         <article className="industrial-panel input-panel">
-          <PanelHeader index="A" title="Sequence input" meta="FASTA / MAX 10 MB" />
+          <PanelHeader index="A" title="Genome workbook" meta="READ ONLY / FASTA" />
 
           <div className="panel-body input-body">
-            {phase === "idle" || phase === "error" ? (
-              <div
-                className={`dropzone ${isDragging ? "is-dragging" : ""}`}
-                onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }}
-                onDragOver={(event) => event.preventDefault()}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={onDrop}
-                data-testid="dropzone"
-              >
-                <input
-                  ref={inputRef}
-                  id="fasta-file"
-                  type="file"
-                  accept=".fa,.fasta,.fna,text/plain"
-                  onChange={onInput}
-                />
-                <div className="upload-glyph" aria-hidden="true"><span /><span /><span /></div>
-                <p className="drop-title">DROP GENOME SEQUENCE</p>
-                <p className="drop-subtitle">or select an assembled FASTA file</p>
-                <button className="outline-button" type="button" onClick={() => inputRef.current?.click()}>
-                  Browse files <ArrowIcon />
-                </button>
-                <button className="demo-link" type="button" onClick={() => void acceptFile(makeDemoFasta())}>
-                  Use demo sequence
-                </button>
+            <div
+              className={`retro-sheet ${isDragging ? "is-dragging" : ""}`}
+              onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }}
+              onDragOver={(event) => event.preventDefault()}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onDrop}
+              data-testid="dropzone"
+            >
+              <input
+                ref={inputRef}
+                id="fasta-file"
+                className="sheet-file-input"
+                type="file"
+                accept=".fa,.fasta,.fna,text/plain"
+                onChange={onInput}
+              />
+              <div className="sheet-titlebar">
+                <span>GENOME.XLS</span>
+                <span>[ READ ONLY ]</span>
               </div>
-            ) : (
-              <SequenceCard file={file!} summary={summary!} phase={phase} onRemove={reset} />
-            )}
+              <div className="sheet-menubar">
+                <span>FILE</span><span>EDIT</span><span>VIEW</span><span>INSERT</span><span>DATA</span>
+                <div className="sheet-actions">
+                  {file && phase !== "processing" ? <button type="button" onClick={reset}>NEW</button> : null}
+                  <button type="button" onClick={() => inputRef.current?.click()} disabled={phase === "processing"}>OPEN FILE</button>
+                </div>
+              </div>
+              <div className="sheet-formula">
+                <span>{file ? "B1" : "A1"}</span>
+                <b>fx</b>
+                <p>{file?.name ?? "Select or drop an assembled FASTA file"}</p>
+              </div>
+              <div className="sheet-grid">
+                <span className="sheet-corner" /><span className="sheet-column">A</span><span className="sheet-column">B</span><span className="sheet-column">C</span>
 
-            <div className="control-block">
-              <label htmlFor="antibiotic">Target antibiotic</label>
-              <div className="select-wrap">
-                <select
-                  id="antibiotic"
-                  value={antibiotic}
-                  onChange={(event) => setAntibiotic(event.target.value as Antibiotic)}
-                  disabled={phase === "processing"}
-                >
-                  {ANTIBIOTICS.map((item) => <option key={item}>{item}</option>)}
-                </select>
-                <ChevronIcon />
+                <span className="sheet-row">1</span><span className="sheet-cell sheet-label">FILE NAME</span><span className="sheet-cell sheet-value" title={file?.name}>{file?.name ?? "NO FILE SELECTED"}</span><span className="sheet-cell sheet-unit">FASTA</span>
+                <span className="sheet-row">2</span><span className="sheet-cell sheet-label">SEQUENCE SIZE</span><span className="sheet-cell sheet-value">{summary ? formatBases(summary.bases) : "—"}</span><span className="sheet-cell sheet-unit">BASES</span>
+                <span className="sheet-row">3</span><span className="sheet-cell sheet-label">CONTIG COUNT</span><span className="sheet-cell sheet-value">{summary?.contigs ?? "—"}</span><span className="sheet-cell sheet-unit">RECORDS</span>
+                <span className="sheet-row">4</span><span className="sheet-cell sheet-label">GC CONTENT</span><span className="sheet-cell sheet-value">{summary ? `${summary.gcContent.toFixed(1)}%` : "—"}</span><span className="sheet-cell sheet-unit">CALCULATED</span>
+                <span className="sheet-row">5</span><span className="sheet-cell sheet-label">TARGET DRUG</span>
+                <span className="sheet-cell sheet-select-cell">
+                  <select
+                    id="antibiotic"
+                    value={antibiotic}
+                    onChange={(event) => setAntibiotic(event.target.value as Antibiotic)}
+                    disabled={phase === "processing"}
+                    aria-label="Target antibiotic"
+                  >
+                    {ANTIBIOTICS.map((item) => <option key={item}>{item}</option>)}
+                  </select>
+                  <ChevronIcon />
+                </span>
+                <span className="sheet-cell sheet-unit">MODEL INPUT</span>
+                <span className="sheet-row">6</span><span className="sheet-cell sheet-label">SYSTEM STATUS</span>
+                <span className={`sheet-cell sheet-value sheet-status status-${phase}`}>
+                  {phase === "processing" ? "INFERENCE RUNNING" : phase === "complete" ? "OUTPUT COMPLETE" : phase === "error" ? "INPUT ERROR" : file ? "READY" : "AWAITING FILE"}
+                </span>
+                <span className="sheet-cell sheet-unit">{file ? "VALIDATED" : "EMPTY"}</span>
+              </div>
+              <div className="sheet-statusbar">
+                <span>{isDragging ? "RELEASE TO IMPORT FILE" : file ? "1 RECORD SELECTED" : "READY — DROP FILE OR CHOOSE OPEN FILE"}</span>
+                <span>NUM&nbsp;&nbsp;CAPS&nbsp;&nbsp;SCRL</span>
               </div>
             </div>
 
@@ -229,7 +249,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
               onClick={phase === "complete" ? reset : startAnalysis}
               data-testid="analyze-button"
             >
-              <span>{phase === "processing" ? "Inference in progress" : phase === "complete" ? "Run another sequence" : "Initiate analysis"}</span>
+              <span>{phase === "processing" ? "Inference in progress" : phase === "complete" ? "Open new workbook" : "Run workbook analysis"}</span>
               {phase === "processing" ? <span className="button-loader" /> : <ArrowIcon />}
             </button>
             {error ? <p className="error-message" role="alert"><span>!</span>{error}</p> : null}
@@ -280,29 +300,6 @@ function PanelHeader({ index, title, meta }: { index: string; title: string; met
       <div><span>{index}</span><h2>{title}</h2></div>
       <p>{meta}</p>
     </header>
-  );
-}
-
-function SequenceCard({ file, summary, phase, onRemove }: {
-  file: File;
-  summary: FastaSummary;
-  phase: Phase;
-  onRemove: () => void;
-}) {
-  return (
-    <div className="sequence-card">
-      <div className="file-icon" aria-hidden="true"><span>FA</span></div>
-      <div className="file-copy">
-        <p>{file.name}</p>
-        <span>{formatBases(summary.bases)} · {summary.contigs} contig{summary.contigs === 1 ? "" : "s"} · GC {summary.gcContent.toFixed(1)}%</span>
-      </div>
-      {phase === "processing" ? <span className="verified-tag">LOCKED</span> : (
-        <button className="icon-button" onClick={onRemove} type="button" aria-label="Remove sequence">×</button>
-      )}
-      <div className="sequence-preview" aria-hidden="true">
-        {Array.from({ length: 44 }, (_, index) => <i key={index} style={{ "--height": `${18 + ((index * 17) % 68)}%` } as React.CSSProperties} />)}
-      </div>
-    </div>
   );
 }
 
