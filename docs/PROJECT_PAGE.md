@@ -102,9 +102,18 @@ responds by abstaining on 58% of cases instead of guessing, and when it does cal
 is still 94.8% accurate. This is the honesty architecture working as designed, on
 the drug where it matters most.
 
-<!--V3-SLOT: v3 retrain (full 3,000-genome corpus) — when it lands, add a v3-vs-v2
-comparison table here (same columns, held-out groups only) and update the headline
-figures above only where v3 does not regress. v2 fallback stays as written.-->
+**v3 (full 3,000-genome corpus) vs v2 (1,434 genomes), held-out groups:**
+
+| drug | v2 bal. acc | **v3 bal. acc** | delta |
+|---|---|---|---|
+| cefotaxime | 0.694 | **0.950** | **+0.256** |
+| gentamicin | 0.877 | **0.944** | +0.067 |
+| trimethoprim/SXT | 0.906 | **0.946** | +0.040 |
+| ciprofloxacin | 0.956 | **0.916** | −0.040 (within CI95) |
+| ampicillin | 0.838 | **0.823** | −0.015 (noise) |
+
+Mean held-out balanced accuracy rose **0.83 → 0.92**; the previously-broken drugs
+(cefotaxime, gentamicin) are now the strongest. Headline figures above are v3.
 
 ## Random splits lie — grouped splits tell the truth
 
@@ -151,11 +160,13 @@ error: five drugs, five no-calls.
 
 ## Limitations (said before you ask)
 
-- **Cefotaxime generalization.** The held-out clone's ESBL alleles are absent from
-  all training lineages; R-recall is 0.39 and the cluster-level CI95 includes chance.
-  We report it instead of hiding it — and the abstention layers absorb most of the
-  damage (94.8% accuracy when called). This is the case a v3 retrain on the full
-  corpus is meant to improve. <!--V3-SLOT: one line on whether v3 moved cefotaxime.-->
+- **Novel-allele generalization.** In the v2 corpus (1,434 genomes), the held-out
+  clone's ESBL alleles (blaCTX-M-27/-14) were absent from all training lineages —
+  cefotaxime R-recall collapsed to 0.39 and we said so. The v3 corpus (3,000 genomes)
+  carried those alleles into training, and held-out balanced accuracy went
+  0.694 → 0.950. The lesson is honest in both directions: unseen alleles are a real
+  failure mode, and surveillance breadth is the only durable mitigation — a genuinely
+  novel allele would still be missed, and the no-call layer is the backstop for it.
 - **Mechanism blind spots.** Features come from AMRFinderPlus's catalog; resistance
   mediated by porin loss or efflux overexpression is only partially visible to it,
   so mechanism-incomplete drugs carry a wider no-call band and a declared

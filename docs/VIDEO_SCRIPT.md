@@ -34,10 +34,10 @@ Dark background, one idea per slide, numbers huge. Voice: presenter audio over s
 | 2 | 0:18–0:50 | Pipeline diagram | The 5-stage pipeline drawn as boxes (from README): FASTA → AMRFinderPlus 4.2.7 → ~900-gene/mutation feature grid → per-drug elastic-net LR + Platt calibration → honesty layers (no-call band · ANI override · callability gate) → evaluation on skani cluster splits |
 | 3 | 0:50–1:25 | Small-model slide | "**80 nonzero weights**" (ciprofloxacin model, of ~900 features; 86–162 across the other four drugs). Side note: ~340 training genomes per drug, a handful of outbreak clones |
 | 4 | 1:25–2:25 | Honesty-architecture slide | Four numbered layers: ① skani ANI ≥99.5% cluster splits, headline numbers on unseen lineages only ② asymmetric conformal no-call band (α 0.02 susceptible-side / 0.10 resistant-side) + ANI-distance hard override ③ target-locus callability gate (gyrA/parC/parE) ④ evidence decoupled from model (curated determinant vs statistical association) |
-| 5 | 2:25–2:50 | Failure-modes slide | Three rows: homolog leakage → cluster splits; false confidence → calibration + abstention (cefotaxime as proof: R-recall 0.39, 58% abstained); absent-target false-susceptible → callability gate |
-| 6 | 2:50–3:00 | Close slide | "We answer ~40% of unseen genomes — at 92% accuracy. The rest go to the lab." |
+| 5 | 2:25–2:50 | Failure-modes slide | Three rows: homolog leakage → cluster splits; false confidence → calibration + abstention (v2 cefotaxime as proof: R-recall 0.39, 58% abstained — v3 fixed it to 0.93 by adding lineages); absent-target false-susceptible → callability gate |
+| 6 | 2:50–3:00 | Close slide | "We answer ~80% of unseen genomes — at ~95% accuracy. The rest go to the lab." |
 
-<!--V3-SLOT: if v3 ships, re-record shot 6 numbers (coverage / accuracy-when-called) and the cefotaxime figures in shot 5; fallback = v2 numbers as written below.-->
+<!--V3 APPLIED: shot 6 numbers are v3 (coverage ~78%, mean accuracy-when-called 0.95); shot 5 keeps the v2→v3 cefotaxime arc as the failure-mode proof.-->
 
 ### Narration (exact text)
 
@@ -86,10 +86,10 @@ false-susceptible — 'no gene found' reported as 'susceptible' — is exactly w
 callability gate forbids."
 
 **[Shot 6 · 2:50]** "The result: on lineages it never saw, Genome Firewall declines to
-answer on about six in ten genomes — and on the four in ten it does call, it is right
-about nine times out of ten. That is what honest AMR prediction looks like."
+answer on about two in ten genomes — and on the eight in ten it does call, it is right
+about nineteen times out of twenty. That is what honest AMR prediction looks like."
 
-<!--V3-SLOT: shot 6 close — v2 says "six in ten abstained, nine in ten correct when called" (mean no-call 0.60, mean accuracy-when-called 0.92 across the 5 drugs). Recompute both means from reports/metrics.json if v3 ships.-->
+<!--V3 APPLIED: v3 numbers — mean no-call 0.22, mean accuracy-when-called 0.95 across the 5 drugs (heldout_group, metrics.json v3-3000-20260719).-->
 
 ---
 
@@ -156,7 +156,7 @@ false-susceptible — each with a countermeasure that is built, not promised."
 with standard laboratory susceptibility testing. Genome Firewall doesn't replace the
 lab. It tells you tonight which antibiotic not to start with."
 
-<!--V3-SLOT: shot 6 narration — v2 balanced accuracies 0.956 / 0.906 / 0.877 / 0.838 / 0.694 and "~40% coverage at ~92% accuracy". Update from reports/metrics.json heldout_group if v3 ships; keep the same sentence rhythm.-->
+<!--V3 APPLIED: shot 6 narration — v3 balanced accuracies 0.916 / 0.944 / 0.823 / 0.946 / 0.950 and "~78% coverage at ~95% accuracy" (metrics.json v3-3000-20260719).-->
 
 ---
 
