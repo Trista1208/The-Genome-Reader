@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Script from "next/script";
 import { anyApi } from "convex/server";
 import { useAction, useMutation } from "convex/react";
@@ -13,8 +14,7 @@ import {
 } from "react";
 import { ANTIBIOTICS, type AnalysisResult, type Antibiotic, type RunInference } from "@/lib/types";
 import { formatBases, validateFasta, type FastaSummary } from "@/lib/fasta";
-import { LiquidTitle } from "@/components/liquid-title";
-import { AsciiRenderer } from "@/components/ui/ascii-renderer";
+import { ShaderAnimation } from "@/components/ui/shader-lines";
 
 type Phase = "idle" | "ready" | "processing" | "complete" | "error";
 
@@ -167,101 +167,117 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
   const stage = PROCESSING_STAGES[stageIndex];
   const showingOutput = phase === "processing" || phase === "complete";
 
+  const statusLabel = phase === "error" ? "Input error" : file ? "Ready to analyze" : "Awaiting sequence";
+
   return (
-    <main className="app-shell">
-      <div className="ambient-grid" aria-hidden="true" />
-      <section className="hero" id="top">
-        <LiquidTitle />
-      </section>
+    <main className={`app-shell phase-shell-${phase}`}>
+      <div className="split-shader-field" aria-hidden="true">
+        <div className="split-shader-panel split-shader-left">
+          <ShaderAnimation pattern="flow" speed={0.88} />
+        </div>
+        <div className="split-shader-panel split-shader-right">
+          <ShaderAnimation pattern="flow" timeOffset={7.5} speed={1.08} />
+        </div>
+      </div>
 
-      <section className={`analysis-workspace ${showingOutput ? "workspace-output" : "workspace-input"} phase-${phase}`} aria-label="Genome analysis workspace">
+      <header className="analysis-header">
+        <Link className="analysis-brand" href="/" aria-label="Breakpoint home">
+          <span aria-hidden="true">B</span>
+          <strong>BREAKPOINT</strong>
+        </Link>
+        <p><span>GENOMIC RESPONSE CHECK</span><b>01 / FASTA</b></p>
+      </header>
+
+      <section className={`analysis-page ${showingOutput ? "is-output" : "is-input"}`}>
+        <div className="analysis-intro">
+          <p className="analysis-eyebrow"><span /> ANTIBIOTIC RESPONSE INTELLIGENCE</p>
+          <h1>Upload a genome.<br /><em>Find the breakpoint.</em></h1>
+          <p className="analysis-description">Run an assembled bacterial genome through the response model to estimate whether the selected antibiotic is likely to work.</p>
+          <div className="analysis-specs" aria-label="Accepted input details">
+            <span><b>INPUT</b> .FA / .FASTA / .FNA</span>
+            <span><b>CHECK</b> LOCAL SEQUENCE VALIDATION</span>
+          </div>
+        </div>
+
+        <section className={`analysis-workspace ${showingOutput ? "workspace-output" : "workspace-input"} phase-${phase}`} aria-label="Genome analysis workspace">
         {!showingOutput ? (
-        <article className="industrial-panel input-panel">
-          <PanelHeader index="A" title="Genome workbook" meta="READ ONLY / FASTA" />
+        <article className="reader-card input-panel">
+          <header className="reader-card-header">
+            <span className="reader-step">01</span>
+            <div>
+              <p>SEQUENCE INPUT</p>
+              <h2>Choose a genome file</h2>
+            </div>
+            <span className={`reader-status status-${phase}`}><i />{statusLabel}</span>
+          </header>
 
-          <div className="panel-body input-body">
+          <div className="reader-card-body">
             <div
-              className={`retro-sheet ${isDragging ? "is-dragging" : ""}`}
+              className={`sequence-dropzone ${isDragging ? "is-dragging" : ""} ${file ? "has-file" : ""}`}
               onDragEnter={(event) => { event.preventDefault(); setIsDragging(true); }}
               onDragOver={(event) => event.preventDefault()}
               onDragLeave={() => setIsDragging(false)}
               onDrop={onDrop}
               data-testid="dropzone"
             >
-              <div className="sheet-dna-backdrop" aria-hidden="true">
-                <AsciiRenderer variant="backdrop" />
-              </div>
               <input
                 ref={inputRef}
                 id="fasta-file"
-                className="sheet-file-input"
+                className="sequence-file-input"
                 type="file"
                 accept=".fa,.fasta,.fna,text/plain"
                 onChange={onInput}
               />
-              <div className="sheet-titlebar">
-                <span>GENOME.XLS</span>
-                <span>[ READ ONLY ]</span>
+              <div className="dropzone-icon" aria-hidden="true"><UploadIcon /></div>
+              <p className="dropzone-kicker">{isDragging ? "RELEASE TO IMPORT" : file ? "SEQUENCE VALIDATED" : "DRAG + DROP"}</p>
+              <h3 title={file?.name}>{file?.name ?? "Drop your assembled genome here"}</h3>
+              <p className="dropzone-copy">
+                {summary
+                  ? `${formatBases(summary.bases)} across ${summary.contigs} contig${summary.contigs === 1 ? "" : "s"}`
+                  : "FASTA, FNA or FA · sequence contents are checked before analysis"}
+              </p>
+              <div className="dropzone-actions">
+                <button type="button" onClick={() => inputRef.current?.click()}>{file ? "Replace file" : "Browse files"}</button>
+                {file ? <button type="button" className="quiet-action" onClick={reset}>Remove</button> : null}
               </div>
-              <div className="sheet-menubar">
-                <span>FILE</span><span>EDIT</span><span>VIEW</span><span>INSERT</span><span>DATA</span>
-                <div className="sheet-actions">
-                  {file ? <button type="button" onClick={reset}>NEW</button> : null}
-                  <button type="button" onClick={() => inputRef.current?.click()}>OPEN FILE</button>
-                </div>
-              </div>
-              <div className="sheet-formula">
-                <span>{file ? "B1" : "A1"}</span>
-                <b>fx</b>
-                <p>{file?.name ?? "Select or drop an assembled FASTA file"}</p>
-              </div>
-              <div className="sheet-grid">
-                <span className="sheet-corner" /><span className="sheet-column">A</span><span className="sheet-column">B</span><span className="sheet-column">C</span>
+            </div>
 
-                <span className="sheet-row">1</span><span className="sheet-cell sheet-label">FILE NAME</span><span className="sheet-cell sheet-value" title={file?.name}>{file?.name ?? "NO FILE SELECTED"}</span><span className="sheet-cell sheet-unit">FASTA</span>
-                <span className="sheet-row">2</span><span className="sheet-cell sheet-label">SEQUENCE SIZE</span><span className="sheet-cell sheet-value">{summary ? formatBases(summary.bases) : "—"}</span><span className="sheet-cell sheet-unit">BASES</span>
-                <span className="sheet-row">3</span><span className="sheet-cell sheet-label">CONTIG COUNT</span><span className="sheet-cell sheet-value">{summary?.contigs ?? "—"}</span><span className="sheet-cell sheet-unit">RECORDS</span>
-                <span className="sheet-row">4</span><span className="sheet-cell sheet-label">GC CONTENT</span><span className="sheet-cell sheet-value">{summary ? `${summary.gcContent.toFixed(1)}%` : "—"}</span><span className="sheet-cell sheet-unit">CALCULATED</span>
-                <span className="sheet-row">5</span><span className="sheet-cell sheet-label">TARGET DRUG</span>
-                <span className="sheet-cell sheet-select-cell">
+            <div className="reader-controls">
+              <label htmlFor="antibiotic">
+                <span>TARGET ANTIBIOTIC</span>
+                <span className="reader-select">
                   <select
                     id="antibiotic"
                     value={antibiotic}
                     onChange={(event) => setAntibiotic(event.target.value as Antibiotic)}
-                    aria-label="Target antibiotic"
                   >
                     {ANTIBIOTICS.map((item) => <option key={item}>{item}</option>)}
                   </select>
                   <ChevronIcon />
                 </span>
-                <span className="sheet-cell sheet-unit">MODEL INPUT</span>
-                <span className="sheet-row">6</span><span className="sheet-cell sheet-label">SYSTEM STATUS</span>
-                <span className={`sheet-cell sheet-value sheet-status status-${phase}`}>
-                  {phase === "error" ? "INPUT ERROR" : file ? "READY" : "AWAITING FILE"}
-                </span>
-                <span className="sheet-cell sheet-unit">{file ? "VALIDATED" : "EMPTY"}</span>
-              </div>
-              <div className="sheet-statusbar">
-                <span>{isDragging ? "RELEASE TO IMPORT FILE" : file ? "1 RECORD SELECTED" : "READY — DROP FILE OR CHOOSE OPEN FILE"}</span>
-                <span>NUM&nbsp;&nbsp;CAPS&nbsp;&nbsp;SCRL</span>
+              </label>
+              <div className="sequence-metrics">
+                <span><b>BASES</b>{summary ? formatBases(summary.bases) : "—"}</span>
+                <span><b>CONTIGS</b>{summary?.contigs ?? "—"}</span>
+                <span><b>GC</b>{summary ? `${summary.gcContent.toFixed(1)}%` : "—"}</span>
               </div>
             </div>
 
             <button
-              className="primary-button"
+              className="analysis-button"
               type="button"
               disabled={!file}
               onClick={startAnalysis}
               data-testid="analyze-button"
             >
-              <span>Run workbook analysis</span>
+              <span>{file ? "Run genome analysis" : "Select a genome to continue"}</span>
               <ArrowIcon />
             </button>
             {error ? <p className="error-message" role="alert"><span>!</span>{error}</p> : null}
           </div>
         </article>
         ) : (
-        <article className="industrial-panel output-panel">
+        <article className="reader-card output-panel">
           <PanelHeader
             index="B"
             title="Model output"
@@ -282,6 +298,7 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
           </div>
         </article>
         )}
+        </section>
       </section>
 
       <footer className="footer-note">
@@ -289,6 +306,14 @@ function GenomeReader({ runInference }: { runInference: RunInference }) {
         <span>DEFENSIVE BY CONSTRUCTION / HUMAN OVERSIGHT REQUIRED</span>
       </footer>
     </main>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16 22V7m0 0-5 5m5-5 5 5M7 20v5h18v-5" />
+    </svg>
   );
 }
 

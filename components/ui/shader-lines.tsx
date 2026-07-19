@@ -14,6 +14,7 @@ const FRAGMENT_SHADER = `
 
   uniform vec2 resolution;
   uniform float time;
+  uniform float pattern;
 
   float random(float x) {
     return fract(sin(x) * 1e4);
@@ -33,12 +34,21 @@ const FRAGMENT_SHADER = `
     float t = time * 0.06 + random(uv.x) * 0.4;
     float lineWidth = 0.0008;
     vec3 color = vec3(0.0);
+    float field = length(uv);
+
+    if (pattern > 0.5) {
+      float slowDrift = time * 0.008;
+      float flow = uv.y * 0.72 + uv.x * 0.16;
+      flow += sin(uv.x * 2.35 + slowDrift) * 0.24;
+      flow += sin(uv.x * 5.7 - slowDrift * 0.7) * 0.075;
+      field = abs(flow);
+    }
 
     for (int channel = 0; channel < 3; channel++) {
       for (int ring = 0; ring < 5; ring++) {
         float index = float(ring);
         color[channel] += lineWidth * index * index /
-          abs(fract(t - 0.01 * float(channel) + index * 0.01) - length(uv));
+          abs(fract(t - 0.01 * float(channel) + index * 0.01) - field);
       }
     }
 
@@ -46,7 +56,15 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export function ShaderAnimation() {
+export function ShaderAnimation({
+  timeOffset = 0,
+  speed = 1,
+  pattern = "rings",
+}: {
+  timeOffset?: number;
+  speed?: number;
+  pattern?: "rings" | "flow";
+} = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,8 +76,9 @@ export function ShaderAnimation() {
     const scene = new THREE.Scene();
     const geometry = new THREE.PlaneGeometry(2, 2);
     const uniforms = {
-      time: { value: 1 },
+      time: { value: 1 + timeOffset },
       resolution: { value: new THREE.Vector2() },
+      pattern: { value: pattern === "flow" ? 1 : 0 },
     };
     const material = new THREE.ShaderMaterial({
       uniforms,
@@ -90,7 +109,7 @@ export function ShaderAnimation() {
     const render = (now: number) => {
       const delta = Math.min((now - lastFrame) / 16.667, 3);
       lastFrame = now;
-      uniforms.time.value += 0.05 * delta;
+      uniforms.time.value += 0.05 * delta * speed;
       renderer.render(scene, camera);
       animationId = requestAnimationFrame(render);
     };
@@ -106,7 +125,7 @@ export function ShaderAnimation() {
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, []);
+  }, [pattern, speed, timeOffset]);
 
   return <div ref={containerRef} className="shader-lines" aria-hidden="true" />;
 }
