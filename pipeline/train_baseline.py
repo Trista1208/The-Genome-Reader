@@ -20,15 +20,15 @@ NOT calibrated, only re-centered — documented in artifacts/summary).
 Conformal no-call bands are still fitted on the calibration split with the
 shifted probabilities (the shift is a fixed, train-only transform).
 
-Target-locus callability gate (pipeline.target_gate): a "likely to work"
-call may never rest solely on "no resistance marker found". Post-hoc, per
-drug: curated point-mutation loci (ciprofloxacin: gyrA/parC/parE) must be
-callable (AMRFinderPlus row at the locus, or the locus k-mer-verified in
-the assembly); drugs without curated loci get an assembly-QC gate and are
-labeled absence-of-evidence. Non-callable flips "likely to work" to
-no-call ("target locus not callable"); flips are counted per drug
-(train_summary.json "gate_flips") and per-genome statuses go to
-demo/data/gate_status.json. Deterministic layer; probabilities unchanged.
+Persistence & versioning: every run is stamped with --version (default
+auto: v<N>-<ngenomes>-<date>). Written per run:
+  - reports/metrics.json        ("_version" key) + reliability PNGs
+  - reports/probabilities_{drug}.csv  (genome_id, p, no_call, reason,
+    dist_to_train; reason = called | conformal_band | ani_ood |
+    conformal_band+ani_ood) — the demo agent consumes these directly
+  - reports/train_summary.json  (version, per-drug split sizes, calibration
+    method, and --prev-metrics comparison when given)
+  - models/{drug}/baseline.pkl + nocall_bands.json
 
 Also computes the random-split-vs-grouped gap for --gap-drug: the same model
 trained on a stratified random row-wise 80/20 split vs the grouped protocol
@@ -39,17 +39,20 @@ Usage (from repo root):
     --features features/feature_matrix.csv \
     --labels data/clean/labels_clean_ecoli.csv \
     --splits splits/splits.json --edges splits/skani_edges.tsv \
+    --version v3-3000-$(date +%Y%m%d) --prev-metrics reports/metrics_v2_1434.json \
     --out-reports reports --out-models models
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import pickle
 import re
 import sys
 import warnings
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
@@ -65,7 +68,7 @@ from sklearn.model_selection import (
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from pipeline import calibrate, metrics, nocall, splits as splits_mod, target_gate
+from pipeline import calibrate, metrics, nocall, splits as splits_mod
 
 DRUGS = [
     "ciprofloxacin",
@@ -76,6 +79,7 @@ DRUGS = [
 ]
 
 DEFAULT_MIN_CAL_R = 5  # below this many R in calibration, Platt is degenerate
+VERDICT_EPS = 0.01     # |delta bal_acc| below this counts as "held"
 
 
 def safe_name(drug: str) -> str:
@@ -161,6 +165,32 @@ def nearest_train_distances(edges: pd.DataFrame, train_genomes: set[str],
     return {g: 100.0 - float(mx.get(g, 0.0)) for g in genomes}
 
 
+def nocall_reasons(p, bands: nocall.NoCallBands, distances) -> tuple[np.ndarray, list[str]]:
+    """(mask, per-genome reason) decomposed into conformal vs ANI-override."""
+    p = np.asarray(p, dtype=float)
+    sets = nocall.prediction_sets(p, bands)
+    band_nc = (sets == 0) | (sets == 3)
+    dist_nc = np.zeros(len(p), dtype=bool)
+    if distances is not None and bands.dist_threshold is not None:
+        dist_nc = np.asarray(distances, dtype=float) > bands.dist_threshold
+    reasons = []
+    for b, d in zip(band_nc, dist_nc):
+        reasons.append("conformal_band+ani_ood" if b and d else
+                       "conformal_band" if b else
+                       "ani_ood" if d else "called")
+    return band_nc | dist_nc, reasons
+
+
+def write_probabilities(path: Path, version: str, genomes, p, mask, reasons, dist):
+    """reports/probabilities_{drug}.csv — demo-agent consumption format."""
+    with open(path, "w", newline="") as fh:
+        fh.write(f"# version={version}\n")
+        w = csv.writer(fh)
+        w.writerow(["genome_id", "p", "no_call", "reason", "dist_to_train"])
+        for g, pi, m, r, d in zip(genomes, p, mask, reasons, dist):
+            w.writerow([g, f"{pi:.6f}", int(m), r, f"{d:.2f}"])
+
+
 def block_metrics(y, p) -> dict:
     m = metrics.binary_metrics(np.asarray(y), np.asarray(p))
     return {k: m[k] for k in
@@ -202,6 +232,38 @@ def random_vs_grouped_gap(drug: str, X, y, splits_of, seed: int = 0) -> dict:
     return out
 
 
+def compare_runs(results: dict, prev_path: str, eps: float = VERDICT_EPS) -> dict:
+    """v_new vs v_prev on the same axes (seen + heldout_group bal acc).
+
+    Verdict per drug: improved (delta > eps) | regressed (delta < -eps) | held.
+    """
+    prev = json.loads(Path(prev_path).read_text())
+    cmp = {}
+    for drug, res in results.items():
+        if drug == "_version":
+            continue
+        if drug not in prev:
+            cmp[drug] = {"verdict": "new (no prior)"}
+            continue
+        entry = {}
+        worst_delta = 0.0
+        for grp in ("seen", "heldout_group"):
+            now = res.get("groups", {}).get(grp, {}).get("balanced_accuracy")
+            before = prev[drug].get("groups", {}).get(grp, {}).get("balanced_accuracy")
+            if now is None or before is None:
+                entry[grp] = {"prev": before, "now": now, "delta": None}
+                continue
+            delta = now - before
+            entry[grp] = {"prev": round(before, 4), "now": round(now, 4),
+                          "delta": round(delta, 4)}
+            if grp == "heldout_group":
+                worst_delta = delta  # heldout is the shipping axis
+        d = worst_delta
+        entry["verdict"] = "improved" if d > eps else "regressed" if d < -eps else "held"
+        cmp[drug] = entry
+    return cmp
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--features", default="features/feature_matrix.csv")
@@ -213,21 +275,19 @@ def main(argv=None) -> int:
     ap.add_argument("--min-cal-r", type=int, default=DEFAULT_MIN_CAL_R,
                     help="min R genomes in calibration for Platt; below this, "
                          "use the grouped-CV threshold fallback")
+    ap.add_argument("--version", default=None,
+                    help="shared artifact tag (default: auto from corpus size + date)")
+    ap.add_argument("--prev-metrics", default=None,
+                    help="previous reports/metrics.json for comparison")
     ap.add_argument("--out-reports", default="reports")
     ap.add_argument("--out-models", default="models")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--no-gate", action="store_true",
-                    help="disable the target-locus callability gate")
-    ap.add_argument("--gate-tsv-dir", default="features/amrfinder")
-    ap.add_argument("--gate-fna-dir", default="data/genomes")
-    ap.add_argument("--gate-mutall-dir", default="features/amrfinder_mutall",
-                    help="optional --mutation_all TSVs (used if dir exists)")
-    ap.add_argument("--gate-demo-out", default="demo/data/gate_status.json",
-                    help="gate panel JSON for the demo; '' skips writing")
     args = ap.parse_args(argv)
     drugs = args.drugs.split(",")
 
     fm = pd.read_csv(args.features, dtype={"genome_id": str}, index_col="genome_id")
+    version = args.version or (
+        f"v3-{fm.shape[0]}-{datetime.now(timezone.utc):%Y%m%d}")
     labels_all = pd.read_csv(args.labels, dtype={"genome_id": str})
     splits = splits_mod.load_splits(args.splits)
     edges = splits_mod.parse_skani_edges(args.edges)
@@ -235,6 +295,7 @@ def main(argv=None) -> int:
     cluster_of = {g: v["cluster_id"] for g, v in splits.items()}
     train_genomes = {g for g, v in splits.items() if v["split"] == "train"}
     cl_sizes = pd.Series(cluster_of).value_counts()
+    print(f"version={version}", file=sys.stderr)
     print(f"features: {fm.shape[0]} genomes x {fm.shape[1]} cols; "
           f"splits: {len(splits)} genomes "
           f"({split_of.value_counts().to_dict()})", file=sys.stderr)
@@ -243,11 +304,6 @@ def main(argv=None) -> int:
     probabilities, labels_eval, masks = {}, {}, {}
     summary_rows = []
     gap_result = None
-    gate = None
-    if not args.no_gate:
-        gate = target_gate.Gate(args.gate_tsv_dir, args.gate_fna_dir,
-                                args.gate_mutall_dir)
-    gate_report: dict[str, dict[str, dict]] = {}
     for drug in drugs:
         lab = labels_all[labels_all["antibiotic"] == drug]
         y = pd.Series(lab["label"].astype(int).values,
@@ -294,31 +350,24 @@ def main(argv=None) -> int:
 
         p_all = cal.predict_proba(X)[:, 1]
         d_all = np.array([dist[g] for g in genomes])
-        mask = nocall.apply_nocall(p_all, bands, d_all)
-
-        # target-locus callability gate: post-hoc override on "likely to
-        # work" calls only (synthesis v2 change 4; never a silent pass).
-        n_gate_flips = 0
-        if gate is not None:
-            statuses = {g: gate.gate_status(g, drug) for g in genomes}
-            mask, n_gate_flips = target_gate.apply_gate_override(
-                p_all, bands, mask, [statuses[g]["status"] for g in genomes])
-            gate_report[drug] = statuses
-            st_counts = pd.Series([s["status"] for s in statuses.values()]
-                                  ).value_counts().to_dict()
-            print(f"  gate [{drug}]: {n_gate_flips} 'likely to work' call(s) "
-                  f"flipped to no-call ({target_gate.NO_CALL_REASON}); "
-                  f"statuses={st_counts}", file=sys.stderr)
+        mask, reasons = nocall_reasons(p_all, bands, d_all)
 
         probabilities[drug] = dict(zip(genomes, p_all))
         labels_eval[drug] = dict(zip(genomes, y.values.astype(float)))
         masks[drug] = dict(zip(genomes, mask.astype(bool)))
+
+        reports_dir = Path(args.out_reports)
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        write_probabilities(
+            reports_dir / f"probabilities_{safe_name(drug)}.csv",
+            version, genomes, p_all, mask, reasons, d_all)
 
         mdir = Path(args.out_models) / safe_name(drug)
         mdir.mkdir(parents=True, exist_ok=True)
         with open(mdir / "baseline.pkl", "wb") as fh:
             pickle.dump({"model": model, "calibrated": cal,
                          "bands": bands.to_dict(), "drug": drug,
+                         "version": version,
                          "calibration_method": cal_method, "tau": tau,
                          "n_train": len(y_tr), "n_cal": len(y_cal)}, fh)
         bands.save(mdir / "nocall_bands.json")
@@ -330,8 +379,7 @@ def main(argv=None) -> int:
                              **{f"n_{k}": v for k, v in counts.items()},
                              **{f"nR_{k}": v for k, v in r_counts.items()},
                              "calibration_method": cal_method, "tau": tau,
-                             "n_features_selected": n_selected,
-                             "gate_flips": n_gate_flips})
+                             "n_features_selected": n_selected})
 
     if not probabilities:
         print("no drugs evaluated", file=sys.stderr)
@@ -339,13 +387,23 @@ def main(argv=None) -> int:
 
     results = metrics.evaluate_all(
         probabilities, labels_eval, splits, masks, out_dir=args.out_reports)
-    (Path(args.out_reports) / "train_summary.json").write_text(
-        json.dumps(summary_rows, indent=1) + "\n")
+    results["_version"] = version
+    (Path(args.out_reports) / "metrics.json").write_text(
+        json.dumps(results, indent=1) + "\n")
 
-    if gate is not None and args.gate_demo_out:
-        target_gate.write_gate_json(gate_report, args.gate_demo_out)
-        print(f"gate status -> {args.gate_demo_out} "
-              f"({len(gate_report)} drugs)", file=sys.stderr)
+    comparison = (compare_runs(results, args.prev_metrics)
+                  if args.prev_metrics else None)
+    summary = {
+        "version": version,
+        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "n_genomes": int(fm.shape[0]), "n_features": int(fm.shape[1]),
+        "split_sizes": {k: int(v) for k, v in split_of.value_counts().items()},
+        "prev_metrics": args.prev_metrics,
+        "comparison_vs_prev": comparison,
+        "drugs": summary_rows,
+    }
+    (Path(args.out_reports) / "train_summary.json").write_text(
+        json.dumps(summary, indent=1) + "\n")
 
     if args.gap_drug in drugs:
         lab = labels_all[labels_all["antibiotic"] == args.gap_drug]
@@ -362,6 +420,8 @@ def main(argv=None) -> int:
             "auroc", "pr_auc", "brier", "nocall", "acc_after_nc"]
     print("\t".join(cols))
     for drug, res in results.items():
+        if drug == "_version":
+            continue
         for group in ("seen", "heldout_group"):
             g = res.get("groups", {}).get(group)
             if not g:
@@ -374,6 +434,13 @@ def main(argv=None) -> int:
             print("\t".join("NA" if v is None else
                             (f"{v:.3f}" if isinstance(v, float) else str(v))
                             for v in row))
+    if comparison:
+        print("\nv2->v3 comparison (heldout_group bal acc is the shipping axis; "
+              f"|delta| <= {VERDICT_EPS} = held):")
+        for drug, e in comparison.items():
+            hg = e.get("heldout_group", {})
+            print(f"  {drug}: {hg.get('prev')} -> {hg.get('now')} "
+                  f"(delta {hg.get('delta')}) => {e.get('verdict')}")
     if gap_result:
         print("\nrandom-vs-grouped gap:", json.dumps(metrics._jsonable(gap_result), indent=1))
     return 0
