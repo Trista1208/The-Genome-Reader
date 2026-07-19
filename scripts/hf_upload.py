@@ -20,6 +20,8 @@ def build_card(repo_id: str) -> str:
     metrics = json.loads((ROOT / "reports/metrics.json").read_text())
     rows = []
     for drug, d in metrics.items():
+        if not isinstance(d, dict) or "groups" not in d:
+            continue  # skip _version and other metadata keys
         h = d["groups"]["heldout_group"]
         rows.append(
             f"| {drug} | {h['balanced_accuracy']:.3f} | {h['recall_resistant']:.2f} "

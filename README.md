@@ -1,8 +1,54 @@
-# Genome Firewall — Backend
+# Genome Firewall
+
+**An honest AI defense system against superbugs.** Predicts from a reconstructed
+bacterial genome which antibiotics are **likely to fail / likely to work / no-call** —
+with calibrated confidence, cited evidence, and principled abstention.
+
+Hack-Nation 6th Global AI Hackathon · Challenge 06 · strictly defensive research
+prototype. **Every prediction must be confirmed with standard laboratory testing.**
+
+## Live artifacts
+
+| What | Where |
+|---|---|
+| Models (skops, open) | https://huggingface.co/Darkroom4364/genome-firewall-ecoli |
+| Demo (static Space) | https://darkroom4364-genome-firewall.static.hf.space |
+| Colab notebook | `notebooks/GenomeFirewall_Demo.ipynb` |
+| Working branch | `sprint/baseline` (merged into `main`) |
+
+## Current numbers (v3, 3,000-genome corpus, held-out genetic groups)
+
+| drug | balanced acc | acc when called | no-call rate |
+|---|---|---|---|
+| cefotaxime | 0.950 | 0.964 | 0.13 |
+| trimethoprim/SXT | 0.946 | 0.965 | 0.39 |
+| gentamicin | 0.944 | 0.969 | 0.09 |
+| ciprofloxacin | 0.916 | 0.944 | 0.14 |
+| ampicillin | 0.823 | 0.908 | 0.35 |
+
+Mean held-out balanced accuracy **0.92** (v2: 0.83). Cefotaxime fixed 0.694 → 0.950
+by adding training lineages carrying its missing ESBL alleles.
+
+## Architecture at a glance
+
+```
+FASTA ─AMRFinderPlus 4.2.7─▶ 886 resistance features ─▶ per-drug elastic-net LR
+      ─Platt calibration ─▶ conformal no-call + ANI-distance override + target gate
+      ─Next.js + Convex product ─▶ FastAPI inference ─▶ audit trail
+```
+
+Shipped model: per-drug elastic-net logistic regression (v3, this repo's
+`pipeline/`). The backend service layer (`backend/`, `inference/`) serves it via
+the prediction API contract. Evidence is decoupled: category (i) curated
+determinant / (ii) statistical association / (iii) no signal.
+
+---
+
+# Full backend & product documentation
 
 **Modules 01 + 02** — Hack-Nation × OpenAI × MIT Club of Northern California × MIT Club of Germany
 
-> Backend pipeline: FASTA → AMRFinderPlus features → **calibrated Random Forest** → per-drug JSON scores (`likely_to_fail` / `likely_to_work` / `no_call`).
+> Backend pipeline: FASTA → AMRFinderPlus features → backend pipeline (service layer) → per-drug JSON scores (`likely_to_fail` / `likely_to_work` / `no_call`).
 
 **Scope:** this repo is **backend only**. Module 03 UI lives in [`frontend/`](frontend/README.md) and consumes [`specs/prediction_api.schema.json`](specs/prediction_api.schema.json).
 

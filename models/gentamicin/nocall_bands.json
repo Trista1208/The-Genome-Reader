@@ -1,0 +1,15 @@
+{
+ "q_susceptible": 0.4928408980309182,
+ "q_resistant": 0.8657138015585876,
+ "alpha_susceptible": 0.02,
+ "alpha_resistant": 0.1,
+ "dist_threshold": 1.678400000000006,
+ "dist_quantile": 0.99,
+ "band": [
+  0.13428619844141243,
+  0.4928408980309182
+ ],
+ "work_below": 0.13428619844141243,
+ "fail_above": 0.4928408980309182,
+ "semantics": "work if p <= work_below; fail if p >= fail_above; else no-call (ANI-distance override forces no-call beyond dist_threshold when set)"
+}

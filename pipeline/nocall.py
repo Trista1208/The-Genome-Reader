@@ -67,17 +67,39 @@ class NoCallBands:
 
     @property
     def band(self) -> tuple[float, float]:
-        """Acceptance edges [lo, hi]: S-call below lo, R-call above hi."""
-        return (1.0 - self.q_resistant, self.q_susceptible)
+        """(work_below, fail_above): work-call iff p <= work_below,
+        fail-call iff p >= fail_above, no-call in between.
+
+        The conformal quantiles admit TWO geometries; this property
+        normalizes both:
+          - overlap (1 - q_R < q_S): mid p lands in BOTH prediction sets
+            (ambiguous) -> no-call interval is [1 - q_R, q_S];
+          - gap (q_S < 1 - q_R, confident model): mid p lands in NEITHER
+            set (empty) -> no-call interval is [q_S, 1 - q_R].
+        apply_nocall handles both via the prediction-set bitmask, and the
+        min/max normalization here reproduces its mask exactly (up to
+        boundary ties). It previously returned (1 - q_R, q_S) unnormalized,
+        which exported INVERTED edges in the gap geometry (seen in the
+        v3-3000 run: band [0.818, 0.432]).
+        """
+        edges = (self.q_susceptible, 1.0 - self.q_resistant)
+        return (min(edges), max(edges))
 
     def to_dict(self) -> dict:
         d = asdict(self)
-        d["band"] = list(self.band)
+        w, f = self.band
+        d["band"] = [w, f]
+        d["work_below"] = w
+        d["fail_above"] = f
+        d["semantics"] = ("work if p <= work_below; fail if p >= fail_above; "
+                          "else no-call (ANI-distance override forces no-call "
+                          "beyond dist_threshold when set)")
         return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "NoCallBands":
-        d = {k: v for k, v in d.items() if k != "band"}
+        d = {k: v for k, v in d.items()
+             if k not in ("band", "work_below", "fail_above", "semantics")}
         return cls(**d)
 
     def save(self, path: str | Path) -> Path:

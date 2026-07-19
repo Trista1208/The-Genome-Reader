@@ -33,6 +33,7 @@ the planned "BLAST vs ~10 target sequences" check (synthesis v2, change 4).
 from __future__ import annotations
 
 import json
+import os
 import pickle
 import shutil
 import sys
@@ -189,6 +190,12 @@ def point_hits_by_locus(genome_id: str) -> dict[str, list[str]]:
         if syms:
             out[locus] = syms
     return out
+
+
+def _callability_one(genome_id: str, ref: dict) -> tuple[str, dict]:
+    """Pool worker for the per-genome k-mer pass (module level = picklable
+    under spawn)."""
+    return genome_id, callability(genome_id, ref, point_hits_by_locus(genome_id))
 
 
 # ------------------------------------------------------------------ curation
@@ -382,6 +389,7 @@ def main() -> int:
 
     # distances of every feature genome to its nearest TRAINING genome
     from pipeline.train_baseline import nearest_train_distances  # noqa: PLC0415
+    from pipeline.nocall import NoCallBands  # noqa: PLC0415
     all_genomes = sorted(fm.index)
     dist = nearest_train_distances(edges, train_genomes, all_genomes)
 
@@ -396,6 +404,14 @@ def main() -> int:
         "drugs": {},
         "genomes": {},
     }
+    # the k-mer callability pass scans every assembly (~1.2 s/genome
+    # single-threaded) — farm it out across cores
+    from concurrent.futures import ProcessPoolExecutor  # noqa: PLC0415
+    workers = min(14, os.cpu_count() or 4)
+    log(f"callability pass: {len(all_genomes)} genomes on {workers} workers")
+    with ProcessPoolExecutor(max_workers=workers) as ex:
+        call_maps = dict(ex.map(_callability_one, all_genomes,
+                                [ref] * len(all_genomes), chunksize=8))
     for gid in all_genomes:
         s = splits.get(gid, {})
         cache["genomes"][gid] = {
@@ -403,7 +419,7 @@ def main() -> int:
             "cluster_id": s.get("cluster_id"),
             "coarse_clade_id": s.get("coarse_clade_id"),
             "dist_to_train": round(dist.get(gid, 100.0), 4),
-            "callability": callability(gid, ref, point_hits_by_locus(gid)),
+            "callability": call_maps[gid],
             "drugs": {},
         }
 
@@ -416,9 +432,22 @@ def main() -> int:
         with open(pkl, "rb") as fh:
             art = pickle.load(fh)
         cal, bands = art["calibrated"], art["bands"]
+        # v3: pkls saved before a190d63 carry pre-normalization band edges
+        # (inverted in the gap geometry); re-derive the canonical export
+        # (band = [work_below, fail_above]) from the quantiles
+        bands = NoCallBands.from_dict(bands).to_dict()
         model = art["model"]
         coef = model.named_steps["lr"].coef_[0]
-        feat_names = np.array(fm.columns)
+        # align to the columns the model was fit on: the live feature matrix
+        # may carry extra (newer) columns the model has never seen, which
+        # sklearn rejects by name
+        model_cols = [str(c) for c in getattr(model, "feature_names_in_",
+                                              fm.columns)]
+        missing = [c for c in model_cols if c not in fm.columns]
+        if missing:
+            raise SystemExit(f"{drug}: model expects {len(missing)} features "
+                             f"absent from feature_matrix.csv: {missing[:5]}")
+        feat_names = np.array(model_cols)
         nonzero = feat_names[coef != 0]
         nz_coef = coef[coef != 0]
 
@@ -427,7 +456,7 @@ def main() -> int:
                       index=lab["genome_id"].values)
         y = y[~y.index.duplicated(keep="first")]
         genomes = sorted(set(y.index) & set(fm.index) & set(splits.keys()))
-        X = fm.loc[genomes]
+        X = fm.loc[genomes, model_cols]
         p_all = cal.predict_proba(X)[:, 1]
         log(f"{drug}: scored {len(genomes)} genomes, "
             f"band=[{bands['band'][0]:.3f},{bands['band'][1]:.3f}]")
