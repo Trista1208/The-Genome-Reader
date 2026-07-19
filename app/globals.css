@@ -113,7 +113,7 @@ button { cursor: pointer; }
   padding: clamp(38px, 5vh, 58px) 0;
   text-align: center;
 }
-.hero h1 { margin: 0; font-family: var(--font-panchang), var(--font-switzer), sans-serif; font-size: clamp(38px, 4.4vw, 66px); font-weight: 560; line-height: 1; letter-spacing: -.045em; }
+.hero h1 { margin: 0; font-family: var(--font-panchang), var(--font-switzer), sans-serif; font-size: clamp(36px, 4.1vw, 62px); font-weight: 700; line-height: 1; letter-spacing: -.035em; text-transform: uppercase; }
 
 .analysis-workspace {
   position: relative;
@@ -336,7 +336,7 @@ button { cursor: pointer; }
 @media (max-width: 560px) {
   .topbar { height: 74px; }
   .brand-copy small, .system-status span:not(.status-dot):not(:last-child), .status-divider { display: none; }
-  .hero h1 { font-size: clamp(30px, 9vw, 42px); }
+  .hero h1 { font-size: clamp(25px, 7.4vw, 36px); letter-spacing: -.025em; }
   .input-body { padding: 15px; }
   .dropzone, .sequence-card { min-height: 250px; }
   .panel-header { padding-inline: 13px; }

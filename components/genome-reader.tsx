@@ -181,7 +181,7 @@ function GenomeReader({ runInference, mode }: { runInference: RunInference; mode
       </header>
 
       <section className="hero" id="top">
-        <h1>antibiotic check</h1>
+        <h1>ANTIBIOTIC CHECK</h1>
       </section>
 
       <section className={`analysis-workspace phase-${phase}`} aria-label="Genome analysis workspace">
