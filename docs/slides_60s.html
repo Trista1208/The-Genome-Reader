@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Genome Firewall — 60s deck (block diagrams)</title>
+<style>
+  :root{
+    --paper:#ffffff; --ink:#141414; --dim:#5a5a5a; --rule:#141414;
+    --accent:#c0392b;            /* single accent: brick */
+    --soft:#f4f4f2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#e8e8e6;font-family:-apple-system,"SF Pro Display",Helvetica,Arial,sans-serif}
+  .deck{position:fixed;inset:0;background:var(--paper);color:var(--ink);overflow:hidden}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+         padding:5.5vh 6vw;opacity:0;transition:opacity .2s ease}
+  .slide.active{display:flex;opacity:1}
+  .kicker{font-size:2vh;letter-spacing:.3em;text-transform:uppercase;color:var(--dim);margin-bottom:2vh;font-weight:600}
+  .kicker b{color:var(--accent);font-weight:700}
+  h1{font-size:7.6vh;line-height:1.04;font-weight:800;letter-spacing:-.015em}
+  h2{font-size:5vh;line-height:1.08;font-weight:800;letter-spacing:-.01em;margin-bottom:3.4vh}
+  .sub{font-size:2.7vh;color:var(--dim);line-height:1.45;max-width:64ch}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,monospace}
+  /* ---------- block diagram primitives ---------- */
+  .blk{background:#fff;border:2.5px solid var(--rule);border-radius:4px;padding:1.8vh 2vh;text-align:center}
+  .blk .t{font-size:2.5vh;font-weight:800;line-height:1.15}
+  .blk .d{font-size:1.8vh;color:var(--dim);line-height:1.3;margin-top:.6vh}
+  .blk .n{font-size:3.2vh;font-weight:800;color:var(--accent);line-height:1.1}
+  .blk.fill{background:var(--soft)}
+  .blk.hot{border-color:var(--accent)}
+  .arr{align-self:center;flex:0 0 auto;width:5.5vh;height:2.5px;background:var(--rule);position:relative}
+  .arr::after{content:"";position:absolute;right:-1px;top:50%;transform:translateY(-50%);
+              border-left:2vh solid var(--rule);border-top:1.5vh solid transparent;border-bottom:1.5vh solid transparent}
+  .arr.acc{background:var(--accent)} .arr.acc::after{border-left-color:var(--accent)}
+  .flow{display:flex;align-items:stretch;gap:1.4vh}
+  .flow .blk{flex:1;display:flex;flex-direction:column;justify-content:center}
+  /* enclosing group box */
+  .group{border:2.5px solid var(--rule);border-radius:6px;padding:3.4vh 1.6vh 1.6vh;position:relative;flex:1.6;background:#fff}
+  .group>label{position:absolute;top:-1.5vh;left:1.4vh;background:#fff;padding:0 1vh;
+               font-size:1.9vh;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .group .row{display:flex;gap:1.2vh}
+  .group .blk{padding:1.2vh 1vh;border-width:2px}
+  .group .blk .t{font-size:2vh}
+  .group .blk .d{font-size:1.6vh}
+  /* verdict blocks */
+  .verdicts{display:flex;gap:1.2vh}
+  .verdicts .blk{flex:1}
+  .v-fail .n{color:#141414} .v-fail{border-style:solid}
+  /* hook slide verdict strip */
+  .strip{display:flex;gap:1.4vh;margin-top:4.5vh;max-width:92vh}
+  .strip .blk{flex:1;padding:2vh}
+  .strip .blk .t{font-size:2.8vh}
+  /* vertical flow (safety zoom) */
+  .vflow{display:flex;flex-direction:column;gap:1.1vh;max-width:88vh}
+  .vflow .blk{display:flex;align-items:baseline;gap:2vh;text-align:left;padding:1.6vh 2.4vh}
+  .vflow .blk .t{min-width:34vh}
+  .varr{width:2.5px;height:2.6vh;background:var(--rule);margin-left:6vh;position:relative}
+  .varr::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);
+               border-top:1.6vh solid var(--rule);border-left:1.4vh solid transparent;border-right:1.4vh solid transparent}
+  /* scorecard table */
+  table.score{border-collapse:collapse;width:100%;border-top:3px solid var(--rule)}
+  .score th{text-align:left;color:var(--dim);font-weight:600;font-size:1.9vh;text-transform:uppercase;
+            letter-spacing:.12em;padding:1.2vh 1vh;border-bottom:2px solid var(--rule)}
+  .score td{padding:1.55vh 1vh;border-bottom:1.5px solid #c9c9c6;font-size:2.9vh;font-weight:600}
+  .score td.num{text-align:right;font-weight:800;font-size:3.2vh;width:12vh}
+  .score td.num.acc{color:var(--accent)}
+  .score tr:last-child td{border-bottom:3px solid var(--rule)}
+  .bar{height:1.1vh;background:#e3e3e0;width:100%;position:relative}
+  .bar i{position:absolute;left:0;top:0;bottom:0;background:#141414}
+  .bar i.acc{background:var(--accent)}
+  .foot{margin-top:2.4vh;font-size:2vh;color:var(--dim)}
+  /* failure arc blocks */
+  .arc{display:flex;align-items:stretch;gap:1.4vh;margin:1vh 0 3vh}
+  .arc .blk{flex:1}
+  .arc .blk .big{font-size:6.4vh;font-weight:800;line-height:1}
+  .stats{display:flex;gap:1.4vh;margin-top:1vh}
+  .stats .blk{flex:0 0 30%}
+  /* close */
+  .pillars{display:flex;gap:1.4vh;margin:3vh 0 3.5vh}
+  .pillars .blk{flex:1;padding:2.6vh 2vh}
+  .pillars .blk .t{font-size:2.9vh}
+  .url{font-size:2.6vh;color:var(--accent);font-weight:700}
+  .disclaimer{margin-top:3.5vh;font-size:1.9vh;color:var(--dim);border-top:2px solid var(--rule);padding-top:1.8vh;max-width:90ch}
+  /* hud */
+  #prog{position:fixed;top:0;left:0;height:4px;background:var(--accent);width:0;z-index:5;transition:width .2s}
+  #count{position:fixed;right:2.4vh;bottom:2vh;font-size:1.7vh;color:var(--dim);z-index:5}
+  #hint{position:fixed;left:2.4vh;bottom:2vh;font-size:1.7vh;color:#b9b9b5;z-index:5}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- 1 · hook · 0:00-0:08 -->
+  <section class="slide">
+    <div class="kicker"><b>Genome Firewall</b> · E. coli antibiotic response</div>
+    <h1>The lab needs 1–3 days.<br>The genome is ready now.</h1>
+    <div class="strip">
+      <div class="blk"><div class="t">likely to fail</div><div class="d">don’t start with this drug</div></div>
+      <div class="blk"><div class="t">likely to work</div><div class="d">evidence-backed green light</div></div>
+      <div class="blk hot"><div class="t">no-call</div><div class="d">abstain when evidence is weak</div></div>
+    </div>
+  </section>
+
+  <!-- 2 · architecture / full pipeline · 0:08-0:20 -->
+  <section class="slide">
+    <div class="kicker"><b>Architecture</b> · full pipeline</div>
+    <h2>Genome in, calibrated verdict out</h2>
+    <div class="flow">
+      <div class="blk fill"><div class="t mono">FASTA</div><div class="d">assembled genome, ~5&nbsp;Mb</div></div>
+      <div class="arr"></div>
+      <div class="blk"><div class="t">AMRFinderPlus</div><div class="n">4.2.7</div><div class="d">genes · point mutations · degraded targets</div></div>
+      <div class="arr"></div>
+      <div class="blk"><div class="n">886</div><div class="t">binary features</div><div class="d">one per resistance element</div></div>
+      <div class="arr"></div>
+      <div class="blk"><div class="n">5 ×</div><div class="t">elastic-net LR</div><div class="d">one per drug · Platt-calibrated</div></div>
+      <div class="arr acc"></div>
+      <div class="group">
+        <label>safety wrapper</label>
+        <div class="row">
+          <div class="blk"><div class="t">conformal bands</div></div>
+          <div class="blk"><div class="t">ANI override</div></div>
+          <div class="blk"><div class="t">target gate</div></div>
+        </div>
+      </div>
+      <div class="arr acc"></div>
+      <div class="blk hot"><div class="t">verdict</div><div class="d">fail · work · no-call</div></div>
+    </div>
+    <div class="foot">Trained on 3,000 public BV-BRC genomes · lab labels re-derived against EUCAST v16.1</div>
+  </section>
+
+  <!-- 3 · safety wrapper zoom · 0:20-0:30 -->
+  <section class="slide">
+    <div class="kicker"><b>Safety wrapper</b> · call vs abstain</div>
+    <h2>The score alone is never enough</h2>
+    <div class="vflow">
+      <div class="blk"><div class="t">Conformal no-call bands</div><div class="d">calibrated evidence too weak either way → abstain</div></div>
+      <div class="varr"></div>
+      <div class="blk"><div class="t">ANI-distance override</div><div class="d">too far from any training genome → refuse, don’t guess</div></div>
+      <div class="varr"></div>
+      <div class="blk"><div class="t">Target-locus gate</div><div class="d">“likely to work” only if <span class="mono">gyrA / parC / parE</span> verifiably sequenced</div></div>
+    </div>
+    <div class="foot">Every call also carries three-tier evidence: <b>known determinant · statistical association · explicit no-signal</b></div>
+  </section>
+
+  <!-- 4 · scorecard (dense slide) · 0:30-0:42 -->
+  <section class="slide">
+    <div class="kicker"><b>Honest benchmark</b> · held-out lineages, not random splits</div>
+    <h2>0.92 mean balanced accuracy · 4 of 5 drugs &gt; 0.91</h2>
+    <table class="score">
+      <tr><th>drug</th><th></th><th style="text-align:right">bal. acc</th></tr>
+      <tr><td>ciprofloxacin</td><td><div class="bar"><i style="width:92%"></i></div></td><td class="num">0.92</td></tr>
+      <tr><td>gentamicin</td><td><div class="bar"><i style="width:94%"></i></div></td><td class="num">0.94</td></tr>
+      <tr><td>ampicillin</td><td><div class="bar"><i class="acc" style="width:82%"></i></div></td><td class="num acc">0.82</td></tr>
+      <tr><td>trimethoprim/sulfamethoxazole</td><td><div class="bar"><i style="width:95%"></i></div></td><td class="num">0.95</td></tr>
+      <tr><td>cefotaxime</td><td><div class="bar"><i style="width:95%"></i></div></td><td class="num">0.95</td></tr>
+    </table>
+    <div class="foot">skani genetic clusters (ANI ≥ 99.5%) never seen in training · ampicillin 0.82 reported, not rounded</div>
+  </section>
+
+  <!-- 5 · failure → fix · 0:42-0:52 -->
+  <section class="slide">
+    <div class="kicker"><b>We caught our own failure</b></div>
+    <div class="arc">
+      <div class="blk"><div class="big">0.69</div><div class="d">cefotaxime, v2<br>unseen ESBL allele</div></div>
+      <div class="arr acc"></div>
+      <div class="blk fill"><div class="big">+</div><div class="d">more lineages<br>1,434 → 3,000 genomes</div></div>
+      <div class="arr acc"></div>
+      <div class="blk hot"><div class="big">0.95</div><div class="d">cefotaxime, v3<br>held-out lineages</div></div>
+    </div>
+    <div class="stats">
+      <div class="blk"><div class="n">~2/10</div><div class="d">genomes abstained — no-call when evidence is weak</div></div>
+      <div class="blk"><div class="n">95%</div><div class="d">accurate on the genomes it does call</div></div>
+    </div>
+    <div class="foot">That’s the point of honest evaluation.</div>
+  </section>
+
+  <!-- 6 · close · 0:52-0:60 -->
+  <section class="slide">
+    <div class="kicker"><b>Genome Firewall</b></div>
+    <div class="pillars">
+      <div class="blk"><div class="t">Small honest models</div></div>
+      <div class="blk"><div class="t">Explicit abstention</div></div>
+      <div class="blk"><div class="t">Spectrum-confirmed evidence</div></div>
+    </div>
+    <div class="url mono">huggingface.co/Darkroom4364/genome-firewall-ecoli</div>
+    <div class="disclaimer">Research prototype — every prediction must be confirmed with standard laboratory susceptibility testing. Not a medical device.</div>
+  </section>
+
+</div>
+<div id="prog"></div>
+<div id="count"></div>
+<div id="hint">→ / space to advance · ?s=N to jump</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const p=new URLSearchParams(location.search);
+  if(p.has('s')) i=Math.min(Math.max(parseInt(p.get('s'))-1||0,0),slides.length-1);
+  function show(n){
+    i=Math.min(Math.max(n,0),slides.length-1);
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('count').textContent=(i+1)+' / '+slides.length;
+    document.getElementById('prog').style.width=((i+1)/slides.length*100)+'%';
+  }
+  addEventListener('keydown',e=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();show(i+1)}
+    if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}
+  });
+  addEventListener('click',()=>show(i+1));
+  show(i);
+</script>
+</body>
+</html>
